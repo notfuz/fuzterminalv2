@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuz Terminal</title>
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://notfuz.github.io/fuzterminal/">
+    <meta property="og:title" content="Fuz Terminal">
+    <meta property="og:description" content="Type 'help' to see all available commands.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/notfuz/fuzterminal/refs/heads/main/assets/badges/active-developer.png">
+    <meta name="theme-color" content="#04050b">
+    <meta name="twitter:card" content="summary">
+
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/effects.css">
+</head>
+<body>
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <main id="terminal" class="window">
+        <i class="ring" aria-hidden="true"><i></i></i>
+
+        <header id="terminal-header" class="window-header">
+            <div class="traffic">
+                <span class="red"></span>
+                <span class="yellow"></span>
+                <span class="green"></span>
+            </div>
+            <div class="title">fuz@terminal</div>
+            <div class="header-spacer"></div>
+        </header>
+
+        <div id="terminal-body">
+            <pre class="banner" aria-hidden="true">███████╗██╗   ██╗███████╗
+██╔════╝██║   ██║╚══███╔╝
+█████╗  ██║   ██║  ███╔╝
+██╔══╝  ██║   ██║ ███╔╝
+██║     ╚██████╔╝███████╗
+╚═╝      ╚═════╝ ╚══════╝</pre>
+            <div class="line info">Welcome to my website.</div>
+            <div class="line info">Type <span class="cmd">help</span> to see all available commands.</div>
+
+            <div id="output"></div>
+
+            <div id="input-line" class="line cmdline">
+                <span class="prompt"><span class="user">fuz</span>@<span class="host">terminal</span>:~$</span>
+                <span id="terminal-text" class="typed-command"><span id="t-before"></span><span id="t-cursor"> </span><span id="t-after"></span></span>
+                <input id="real-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" aria-label="Terminal input">
+            </div>
+        </div>
+    </main>
+
+    <div id="gallery-overlay" class="overlay" hidden aria-hidden="true">
+        <div id="gallery-window" class="window" role="dialog" aria-label="Photo gallery">
+            <i class="ring" aria-hidden="true"><i></i></i>
+
+            <header class="window-header">
+                <div class="traffic">
+                    <span class="red" title="Close"></span>
+                    <span class="yellow"></span>
+                    <span class="green"></span>
+                </div>
+                <div class="title">gallery@terminal</div>
+                <div class="header-spacer"></div>
+            </header>
+
+            <div id="gallery-content"></div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="overlay" hidden aria-hidden="true" role="dialog" aria-label="Media viewer">
+        <div id="lightbox-viewport">
+            <div class="lightbox-spinner" aria-hidden="true"></div>
+            <div class="lightbox-error">Couldn't load this one.</div>
+        </div>
+
+        <button id="lightbox-prev" type="button" aria-label="Previous">&#10094;</button>
+        <button id="lightbox-next" type="button" aria-label="Next">&#10095;</button>
+
+        <div id="lightbox-ui">
+            <div id="lightbox-caption"></div>
+            <div id="lightbox-counter"></div>
+        </div>
+
+        <button id="lightbox-close" type="button" aria-label="Close">&times;</button>
+    </div>
+
+    <div id="profile-overlay" class="overlay" hidden aria-hidden="true">
+        <div id="profile-window" class="window" role="dialog" aria-label="Discord profile">
+            <i class="ring" aria-hidden="true"><i></i></i>
+
+            <header id="profile-header" class="window-header">
+                <div class="traffic">
+                    <span class="red" title="Close"></span>
+                    <span class="yellow"></span>
+                    <span class="green"></span>
+                </div>
+                <div class="title">profile@terminal</div>
+                <div class="header-spacer"></div>
+            </header>
+
+            <div id="profile-content">
+                <div id="profile-loading">Connecting to Discord...</div>
+
+                <div id="profile-card" hidden>
+                    <div id="profile-banner"></div>
+
+                    <div id="profile-top">
+                        <div id="profile-avatar-container">
+                            <img id="profile-avatar" alt="">
+                            <img id="profile-decoration" alt="">
+                            <div id="profile-status-dot"></div>
+                        </div>
+
+                        <div id="profile-badges"></div>
+                    </div>
+
+                    <div id="profile-names">
+                        <div id="profile-display-name"></div>
+
+                        <div id="profile-username-row">
+                            <span id="profile-username"></span>
+                            <span id="profile-guild-tag" hidden></span>
+                        </div>
+
+                        <div id="profile-custom-status" hidden></div>
+
+                        <div id="profile-status"></div>
+                    </div>
+
+                    <div class="profile-divider"></div>
+
+                    <section id="profile-about-section" class="profile-section">
+                        <h3>About Me</h3>
+                        <p id="profile-about"></p>
+                    </section>
+
+                    <div class="profile-divider"></div>
+
+                    <section class="profile-section">
+                        <h3>Activity <span id="profile-activity-count" hidden></span></h3>
+                        <div id="profile-activity"></div>
+                    </section>
+
+                    <div class="profile-divider"></div>
+
+                    <section class="profile-section">
+                        <h3>Active Devices</h3>
+                        <div id="profile-devices"></div>
+                    </section>
+
+                    <div class="profile-divider"></div>
+
+                    <section class="profile-section">
+                        <h3>Discord Member Since</h3>
+                        <div id="profile-created"></div>
+                    </section>
+
+                    <div class="profile-divider"></div>
+
+                    <section class="profile-section">
+                        <h3>Discord ID</h3>
+                        <div id="profile-id-row">
+                            <span id="profile-id"></span>
+                            <button id="copy-id" type="button">Copy</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <noscript>
+        <div style="position:fixed;inset:0;display:grid;place-items:center;color:#aab;font-family:monospace">This site is a terminal and needs JavaScript. Sorry!</div>
+    </noscript>
+
+    <script type="module" src="./js/main.js"></script>
+    <script type="module" src="./js/terminal.js"></script>
+</body>
+</html>

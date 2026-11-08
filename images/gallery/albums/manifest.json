@@ -1,0 +1,52 @@
+[
+  {
+    "title": "My Kittie",
+    "date": "",
+    "description": "",
+    "folder": "My Kittie",
+    "items": [
+      {
+        "src": "./images/gallery/albums/My%20Kittie/Zzzzz.jpg",
+        "type": "image",
+        "name": "Zzzzz",
+        "description": "This little dude is so cute but boi he makes me mad sometimes",
+        "date": "2025-07-30",
+        "order": 1,
+        "thumb": "./images/gallery/thumbs/My%20Kittie/Zzzzz.webp"
+      },
+      {
+        "src": "./images/gallery/albums/My%20Kittie/He so cute xD.png",
+        "type": "image",
+        "name": "Zzzzz",
+        "description": "Another cute one of him sleeping xD",
+        "date": "2025-07-31",
+        "order": 2,
+        "thumb": "./images/gallery/thumbs/My%20Kittie/He%20so%20cute%20xD.webp"
+      }
+    ]
+  },
+  {
+    "title": "Videos",
+    "date": "",
+    "description": "",
+    "folder": "Videos",
+    "items": [
+      {
+        "src": "./images/gallery/albums/Videos/Test.mp4",
+        "type": "video",
+        "name": "Test",
+        "description": "Test",
+        "date": "Test",
+        "order": 1,
+        "thumb": "./images/gallery/thumbs/Videos/Test.jpg"
+      }
+    ]
+  },
+  {
+    "title": "Pictures I Took",
+    "date": "",
+    "description": "",
+    "folder": "Pictures I Took",
+    "items": []
+  }
+]
