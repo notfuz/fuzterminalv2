@@ -1,7 +1,3 @@
-/* ==========================================================================
-   Secret command effects (see js/secrets.js)
-   ========================================================================== */
-
 .fx-overlay {
     position: fixed;
     inset: 0;
@@ -46,8 +42,6 @@
     75% { transform: translateX(-3px); }
 }
 
-/* ---------- toast ---------- */
-
 #toast-host {
     position: fixed;
     top: 18px;
@@ -60,54 +54,34 @@
 }
 
 .toast {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 260px;
-    max-width: min(370px, calc(100vw - 36px));
-    padding: 12px 16px;
-    border-radius: 14px;
-    border: 1px solid var(--line-strong);
-    background: rgba(14, 17, 34, .97);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, .5), 0 0 30px rgba(138, 180, 255, .12);
+    min-width: 220px;
+    max-width: min(320px, calc(100vw - 36px));
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(14, 14, 16, .96);
     font-family: var(--mono);
-    transform: translateX(125%);
+    transform: translateX(20px);
     opacity: 0;
-    transition: transform .5s cubic-bezier(.2, 1.1, .3, 1), opacity .4s;
+    transition: transform .3s ease, opacity .3s ease;
 }
 
 .toast.show { transform: none; opacity: 1; }
 
-.toast-icon {
-    flex: none;
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    border-radius: 11px;
-    background: linear-gradient(135deg, rgba(138, 180, 255, .25), rgba(183, 156, 255, .25));
-    font-size: 20px;
-}
-
-.toast-body { min-width: 0; flex: 1; }
-.toast-title { font-size: 14px; font-weight: 700; }
-.toast-text { margin-top: 2px; color: var(--muted); font-size: 12.5px; }
+.toast-title { font-size: 13px; font-weight: 700; }
+.toast-text { margin-top: 2px; color: var(--muted); font-size: 12px; }
 
 .toast-bar {
-    height: 4px;
+    height: 2px;
     margin-top: 8px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, .08);
-    overflow: hidden;
+    background: rgba(255, 255, 255, .1);
 }
 
 .toast-bar i {
     display: block;
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background: rgba(255, 255, 255, .55);
 }
-
-/* ---------- fortune cookie ---------- */
 
 .fortune {
     position: relative;
@@ -208,8 +182,6 @@
 .fx-fortune .ring > i {
     background: conic-gradient(from 0deg, transparent 0 60%, rgba(255, 255, 255, .0) 60%, rgba(255, 255, 255, .9) 85%, transparent 95%);
 }
-
-/* ---------- coffee ---------- */
 
 .coffee-ui {
     width: min(320px, 88vw);
@@ -333,8 +305,6 @@
 
 @keyframes blink-err { 50% { opacity: .2; } }
 
-/* ---------- sudo ---------- */
-
 .sudo-ui {
     --line: rgba(255, 95, 109, .4);
     width: min(400px, 88vw);
@@ -390,8 +360,6 @@
 
 .sudo-title { color: var(--red); font-size: 20px; font-weight: 800; letter-spacing: .1em; }
 .sudo-sub { margin-top: 10px; color: #c9a5ab; font-size: 13px; line-height: 1.6; }
-
-/* ---------- rm -rf / ---------- */
 
 .fx-rm {
     background: rgba(24, 0, 4, .9);
@@ -491,7 +459,6 @@
     to { opacity: 1; transform: none; }
 }
 
-/* the terminal glitching while "deleting" */
 #terminal.glitching {
     animation: glitch-jolt .2s steps(2) infinite;
 }
@@ -507,8 +474,6 @@
     75% { transform: translate(-50%, -50%) translate(-3px, 4px) skewX(-1.5deg); }
     100% { transform: translate(-50%, -50%) translate(4px, 0); }
 }
-
-/* ---------- exit: CRT power cycle ---------- */
 
 .fx-crt { background: rgba(0, 0, 0, .35); cursor: default; }
 
@@ -536,8 +501,6 @@
     45% { transform: translate(-50%, -50%) scale(1, .006); filter: brightness(3); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1, 1); filter: brightness(1); opacity: 1; }
 }
-
-/* ---------- hack ---------- */
 
 .hack-ui {
     --line: rgba(92, 255, 135, .35);
@@ -618,8 +581,6 @@
 .fx-hack.denied .hack-stamp { opacity: 1; }
 .fx-hack.denied .hack-stamp span { animation: stamp .45s cubic-bezier(.2, 1.2, .3, 1) both; }
 
-/* ---------- hello ---------- */
-
 .fx-hello { align-items: flex-end; justify-content: flex-end; }
 
 .hello-bubble {
@@ -655,8 +616,6 @@
     80% { transform: rotate(-6deg); }
 }
 
-/* ---------- cd: wandering footsteps ---------- */
-
 .fx-steps i {
     position: absolute;
     width: 13px;
@@ -690,8 +649,6 @@
     100% { opacity: 0; transform: rotate(90deg) scale(1); }
 }
 
-/* ---------- matrix ---------- */
-
 .fx-matrix.ambient { background: rgba(0, 12, 5, .55); }
 
 .fx-matrix canvas {
@@ -724,8 +681,6 @@
     background: #a4ffbd;
     animation: blink 1s steps(1) infinite;
 }
-
-/* ---------- 42 / deep thought ---------- */
 
 .fx-deep {
     background: radial-gradient(circle at 50% 45%, rgba(28, 20, 66, .96), rgba(2, 2, 9, .98));
@@ -808,9 +763,6 @@
     .hello-bubble .wave,
     .fx-fortune.open .cookie { animation: none; }
 }
-
-
-/* ---------- explode ---------- */
 
 #terminal.rumbling {
     animation: rumble .08s linear infinite;
@@ -897,8 +849,6 @@
     60% { opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: brightness(1); }
 }
-
-/* ---------- free robux (original coin art, no brand assets) ---------- */
 
 .robux-ui {
     --line: rgba(255, 210, 63, .35);
@@ -1031,13 +981,10 @@
     .coin-spin { animation: none; }
 }
 
-/* ================= batch 3 ================= */
-
-/* ---------- sl ---------- */
 .fx-sl { z-index: 90; }
 .sl-train {
     position: fixed;
-    top: 56%;
+    bottom: 14px;
     left: 0;
     margin: 0;
     color: #cfd6ee;
@@ -1052,7 +999,6 @@
     to { transform: translateX(-130%); }
 }
 
-/* ---------- vim ---------- */
 .vim-ui {
     width: min(620px, 94vw);
     background: #0b0d10;
@@ -1073,14 +1019,19 @@
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    padding: 6px 14px;
-    background: rgba(255, 255, 255, .07);
+    padding: 4px 14px;
+    background: rgba(255, 255, 255, .1);
     color: #e8ebf5;
-    font-size: 13px;
+    font-size: 12.5px;
 }
-.vim-msg { color: #ff8f8f; text-align: right; }
+.vim-cmdline {
+    min-height: 28px;
+    padding: 5px 14px;
+    color: #ff8f8f;
+    font: 13.5px/1.5 var(--mono);
+}
+.vim-cmdline.typing { color: #fff; }
 
-/* ---------- rickroll ---------- */
 .rick-ui {
     width: min(400px, 92vw);
     background: rgba(14, 10, 22, .97);
@@ -1109,7 +1060,6 @@
     100% { box-shadow: 0 0 40px rgba(255, 80, 150, .5); }
 }
 
-/* ---------- blackhole ---------- */
 .fx-bh { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 #terminal.sucked { animation: sucked 3s cubic-bezier(.55, 0, .9, .45) forwards; }
 @keyframes sucked {
@@ -1123,7 +1073,6 @@
     100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* ---------- ping ---------- */
 .fx-ping { align-items: center; justify-content: center; }
 .fx-ping i {
     position: absolute;
@@ -1141,7 +1090,6 @@
     100% { opacity: 0; transform: scale(9); }
 }
 
-/* ---------- konami ---------- */
 .fx-konami { flex-direction: column; background: none; }
 .fx-konami::before {
     content: "";
@@ -1165,10 +1113,8 @@
 @keyframes konami-pop { from { transform: scale(0) rotate(-14deg); } }
 @keyframes konami-bob { to { transform: translateY(-10px) rotate(2deg); } }
 
-/* ---------- gravity ---------- */
 .fx-gravity { background: none; }
 
-/* ---------- bsod ---------- */
 .fx-bsod { z-index: 120; background: #0b6bcb; color: #fff; opacity: 1; cursor: none; font-family: "Segoe UI", system-ui, sans-serif; }
 .bsod-ui { width: min(760px, 90vw); }
 .bsod-face { font-size: clamp(70px, 14vw, 130px); line-height: 1; }
@@ -1187,11 +1133,12 @@
 .bsod-restart { display: none; position: absolute; inset: 0; place-items: center; background: #000; color: #fff; font-size: 22px; }
 .fx-bsod.restarting .bsod-restart { display: grid; }
 
-/* ---------- cat ---------- */
 .fx-cat { background: none; align-items: flex-start; justify-content: flex-start; }
 .cat { position: fixed; pointer-events: none; }
-.cat-svg { width: 100%; height: auto; display: block; image-rendering: pixelated; }
-.cat-legs-b { opacity: 0; }
+.cat-flip { transform-origin: center; }
+.cat.flipped .cat-flip { transform: scaleX(-1); }
+.cat-svg { width: 100%; height: auto; display: block; overflow: visible; transform-origin: 50% 100%; }
+.cat-legs-b, .cat-paw { opacity: 0; }
 .cat.walking .cat-legs-a { animation: legs-a .34s steps(1) infinite; }
 .cat.walking .cat-legs-b { animation: legs-b .34s steps(1) infinite; }
 @keyframes legs-a { 0% { opacity: 1; } 50% { opacity: 0; } }
@@ -1200,12 +1147,22 @@
 @keyframes cat-hop { 50% { transform: translateY(-3px); } }
 .cat-tail { transform-origin: 3px 10px; animation: tail 1s ease-in-out infinite alternate; }
 @keyframes tail { to { transform: rotate(-24deg); } }
-.cat.sitting .cat-legs-a, .cat.sitting .cat-legs-b { opacity: 0; }
-.cat.sitting .cat-svg { transform: translateY(2px); }
+.cat.land .cat-svg { animation: squash .35s ease-out; }
+@keyframes squash { 30% { transform: scale(1.18, .78); } }
+.cat.lying .cat-legs-a, .cat.lying .cat-legs-b { opacity: 0; }
+.cat.lying .cat-svg { transform: translateY(1px) scaleY(.82); }
+.cat.pawing .cat-paw { animation: paw .7s ease-in-out 3; }
+@keyframes paw {
+    0% { opacity: 0; transform: translateX(-2px); }
+    25% { opacity: 1; transform: translateX(0); }
+    55% { opacity: 1; transform: translateX(4px); }
+    80% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(-2px); }
+}
 .cat-bubble {
     position: absolute;
     top: -22px;
-    right: -6px;
+    left: 50%;
     padding: 3px 10px;
     border-radius: 10px;
     background: #fff;
@@ -1217,7 +1174,6 @@
 }
 .cat.meow .cat-bubble { opacity: 1; transform: none; }
 
-/* ---------- coffee fix ---------- */
 .cup-fill {
     position: absolute;
     inset: 5px 5px 5px;
@@ -1225,3 +1181,69 @@
     border-radius: 0 0 40px 40px;
 }
 .cup-fill .cup-level { left: 0; right: 0; border-radius: 0; }
+
+#scene.bh-eat { transform-origin: 50% 50%; animation: bh-eat 3s cubic-bezier(.55, 0, .9, .45) forwards; }
+@keyframes bh-eat {
+    0% { transform: scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: scale(.02) rotate(720deg); opacity: 0; }
+}
+#scene.bh-spit { transform-origin: 50% 50%; animation: bh-spit 1s cubic-bezier(.2, 1.1, .3, 1) both; }
+@keyframes bh-spit {
+    0% { transform: scale(.02) rotate(-360deg); opacity: 0; }
+    35% { opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.gravity-host {
+    position: fixed;
+    inset: 0;
+    z-index: 95;
+    pointer-events: none;
+    font-family: var(--mono);
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--text);
+}
+.g-piece { position: fixed; touch-action: none; user-select: none; }
+.g-piece.landed { pointer-events: auto; cursor: grab; }
+.g-piece.dragging { cursor: grabbing; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .6)); }
+.g-inner { transform-origin: 50% 50%; }
+.g-inner > * { margin: 0 !important; }
+.g-hint {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 8px 8px 14px;
+    transform: translateX(-50%);
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 8px;
+    background: rgba(14, 14, 16, .95);
+    color: var(--muted);
+    font-size: 13px;
+    pointer-events: auto;
+}
+.g-hint button {
+    padding: 4px 10px;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 6px;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+.g-hint button:hover { background: rgba(255, 255, 255, .08); }
+
+.help-about { margin: 6px 0 10px; color: var(--text); }
+.help-tag {
+    margin-left: 10px;
+    padding: 1px 8px;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 400;
+}
+.help-usage { color: #7ee0b0; font-family: var(--mono); white-space: nowrap; }

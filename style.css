@@ -1,14 +1,3 @@
-/* ==========================================================================
-   Fuz Terminal
-   1  tokens + base          5  gallery + lightbox
-   2  windows + shine        6  discord profile
-   3  terminal              7  responsive + reduced motion
-   4  output cards
-   (secret-command effects live in css/effects.css)
-   ========================================================================== */
-
-/* ---------- 1. tokens + base ---------- */
-
 :root {
     --bg: #04050b;
     --panel: rgba(9, 11, 21, .82);
@@ -78,8 +67,6 @@ canvas#scene {
     background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .22) 72%, rgba(0, 0, 0, .78) 100%);
 }
 
-/* ---------- 2. windows + shine ---------- */
-
 .window {
     position: relative;
     display: flex;
@@ -93,7 +80,6 @@ canvas#scene {
         0 0 70px rgba(110, 140, 255, .07);
 }
 
-/* static hairline outline */
 .window::after {
     content: "";
     position: absolute;
@@ -104,11 +90,6 @@ canvas#scene {
     box-shadow: inset 0 0 0 1px var(--line);
 }
 
-/*
- * The shine: a bright arc that travels around the outline now and then.
- * .ring is a 1px-thick masked frame; the arc inside it is only ever animated
- * with transform + opacity, so it runs on the GPU and never repaints.
- */
 .ring {
     position: absolute;
     inset: 0;
@@ -150,7 +131,6 @@ canvas#scene {
 #gallery-window .ring { --shine-delay: .4s; --shine-dur: 9s; }
 #profile-window .ring { --shine-delay: .6s; --shine-dur: 10s; }
 
-/* soft diagonal glint for cards: also transform-only */
 .sheen {
     position: relative;
     overflow: hidden;
@@ -182,7 +162,6 @@ canvas#scene {
     100% { transform: translateX(135%); }
 }
 
-/* a covered terminal doesn't need to animate */
 body.has-window #terminal .ring > i,
 body.has-window #terminal .sheen::after {
     animation-play-state: paused;
@@ -239,8 +218,6 @@ body.has-window #terminal .sheen::after {
 .yellow { background: #febc2e; }
 .green { background: #28c840; }
 
-/* ---------- 3. terminal ---------- */
-
 #terminal {
     position: fixed;
     top: 50%;
@@ -249,7 +226,6 @@ body.has-window #terminal .sheen::after {
     transform: translate(-50%, -50%);
     width: min(860px, calc(100vw - 24px));
     height: min(540px, calc(100dvh - 24px));
-    /* neutral black like the old site. Raise .88 for more solid, lower it for more glass */
     background: rgba(10, 10, 10, .88);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
@@ -329,10 +305,6 @@ body.has-window #terminal .sheen::after {
     border-bottom-style: solid;
 }
 
-/*
- * One layout for BOTH the live input line and echoed commands. Identical
- * structure = the command never shifts or gains a space when you press enter.
- */
 .cmdline {
     position: relative;
     display: flex;
@@ -399,8 +371,6 @@ body.has-window #terminal .sheen::after {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: none; }
 }
-
-/* ---------- 4. output cards ---------- */
 
 .card {
     position: relative;
@@ -472,8 +442,6 @@ body.has-window #terminal .sheen::after {
 
 .kv dt { color: var(--accent); }
 .kv dd { color: var(--text); overflow-wrap: anywhere; }
-
-/* about */
 
 .about-card {
     display: flex;
@@ -556,8 +524,6 @@ body.has-window #terminal .sheen::after {
     font-size: 13px;
 }
 
-/* socials */
-
 .social-list {
     display: grid;
     gap: 10px;
@@ -628,8 +594,6 @@ body.has-window #terminal .sheen::after {
     transform: translate(2px, -2px);
 }
 
-/* projects / empty */
-
 .empty-card {
     text-align: center;
     border-style: dashed;
@@ -637,8 +601,6 @@ body.has-window #terminal .sheen::after {
 
 .empty-title { font-weight: 700; }
 .empty-sub { margin-top: 4px; color: var(--muted); }
-
-/* secrets */
 
 .secrets-head {
     display: flex;
@@ -704,8 +666,6 @@ body.has-window #terminal .sheen::after {
     font-size: 12.5px;
 }
 
-/* hostname / neofetch */
-
 .neofetch {
     display: flex;
     gap: 20px;
@@ -739,8 +699,6 @@ body.has-window #terminal .sheen::after {
     height: 12px;
     border-radius: 3px;
 }
-
-/* ---------- 5. gallery + lightbox ---------- */
 
 .overlay {
     position: fixed;
@@ -906,8 +864,6 @@ body.has-window #terminal .sheen::after {
 .gallery-description { color: var(--accent); font-size: 14px; }
 .gallery-about { margin-top: 10px; color: var(--muted); font-size: 14px; line-height: 1.5; }
 
-/* lightbox */
-
 #lightbox {
     z-index: 60;
     background: rgba(2, 3, 8, .95);
@@ -1022,8 +978,6 @@ video.lightbox-media {
 
 #lightbox-caption { margin-bottom: 6px; font-size: 15px; line-height: 1.45; text-shadow: 0 1px 8px #000; }
 #lightbox-counter { opacity: .6; font-size: 13px; }
-
-/* ---------- 6. discord profile ---------- */
 
 #profile-window {
     width: min(600px, calc(100vw - 24px));
@@ -1189,7 +1143,6 @@ video.lightbox-media {
     height: 14px;
 }
 
-/* the custom status (emoji + text). Lives under the name, NOT in the activity list. */
 #profile-custom-status {
     display: inline-flex;
     align-items: center;
@@ -1472,8 +1425,6 @@ a.activity-title:hover { text-decoration: underline; }
     color: #fff;
 }
 
-/* ---------- 7. responsive + reduced motion ---------- */
-
 @media (max-width: 640px) {
     #terminal-body { padding: 14px 14px 20px; font-size: 13.5px; }
     .banner { font-size: 10.5px; }
@@ -1508,9 +1459,6 @@ a.activity-title:hover { text-decoration: underline; }
     .overlay,
     .overlay > .window { transition: none; }
 }
-
-
-/* ---------- mobile gate ---------- */
 
 #mobile-gate {
     position: fixed;

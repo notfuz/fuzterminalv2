@@ -1,8 +1,3 @@
-/*
- * Starts the site. On phones the heavy parts (animated sky, terminal) are NOT loaded
- * until the visitor presses Continue on the warning screen.
- */
-
 async function start() {
     document.documentElement.classList.remove("mobile-gate");
     await import("./main.js");

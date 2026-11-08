@@ -1,25 +1,7 @@
-/*
- * All terminal commands live here.
- *
- *   description  shown in `help` (leave empty for hidden commands)
- *   aliases      other names that run the same command
- *   hidden       keep out of `help`
- *   secret       counts towards the "secrets discovered" tracker
- *   output       plain lines (strings) or { text, href } links
- *   render(api)  returns a DOM node for rich output (cards etc.)
- *   effect       name of an animation in secrets.js that plays alongside the output
- *   action       handled by terminal.js (opens windows, toggles sound...)
- *
- * To add a social link or change the about card, edit SOCIALS / ABOUT right below.
- */
-
 import { getFound } from "./secrets.js";
 import { h } from "./dom.js";
 
-/* ------------------------------------------------------------------ */
-/* Edit these two to change the about + socials commands.             */
-/* ------------------------------------------------------------------ */
-
+// edit this to change the about command
 const ABOUT = {
     name: "Fuz",
     handle: "@notfuz",
@@ -34,6 +16,7 @@ const ABOUT = {
     tags: ["developer", "tinkerer", "night owl"]
 };
 
+// edit this to change the socials command
 const SOCIALS = [
     {
         name: "Discord Server",
@@ -64,7 +47,6 @@ const ICONS = {
         h("svg:line", { x1: "14", y1: "4", x2: "10", y2: "20" }))
 };
 
-/** A little animated constellation used as the logo of the about card. */
 function miniConstellation() {
     const pts = [[18, 78], [34, 46], [60, 58], [78, 24], [100, 40], [92, 92], [56, 100]];
     const lines = [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [5, 6], [6, 2]];
@@ -77,10 +59,6 @@ function miniConstellation() {
             cx: x, cy: y, r: i === 3 ? 3.6 : 2.4, class: "about-logo-star", style: `animation-delay:${(i * 0.45).toFixed(2)}s`
         })));
 }
-
-/* ------------------------------------------------------------------ */
-/* commands                                                           */
-/* ------------------------------------------------------------------ */
 
 const commands = {
 
@@ -138,8 +116,6 @@ const commands = {
         description: "Toggle sound effects",
         action: "sound"
     },
-
-    /* ---------------- secrets ---------------- */
 
     hostname: {
         secret: true,
@@ -335,10 +311,6 @@ const commands = {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* rich renderers                                                     */
-/* ------------------------------------------------------------------ */
-
 export function cmdChip(name, label = name) {
     return h("button", { class: "cmd-chip", type: "button", "data-cmd": name }, label);
 }
@@ -364,6 +336,44 @@ function secretsList() {
             }, h("span", { class: "secret-mark" }, found.has(name) ? "✓" : "·"), name))),
         h("div", { class: "secrets-foot" }, "tap one to run it"));
 }
+
+export const DOCS = {
+    help: { about: "Lists every command, or explains one in detail.", usage: [["help", "list all commands"], ["help <command>", "explain a command, e.g. help sound"]], aliases: [] },
+    clear: { about: "Clears the terminal.", usage: [["clear", "wipe the screen"], ["Ctrl+L", "same thing, from the keyboard"]], aliases: ["cls"] },
+
+    about: { about: "A card with a bit about me." },
+    socials: { about: "Links to my Discord server and GitHub. Click a card to open it." },
+    projects: { about: "What I'm working on." },
+    gallery: { about: "Opens the photo gallery in its own window.", usage: [["click a photo", "open the viewer"], ["← / → or swipe", "browse"], ["Esc", "close"]] },
+    profile: { about: "My live Discord profile: status, activities, Spotify and badges. Refreshes every 10 seconds.", usage: [["Esc", "close it"]] },
+    sound: { about: "Turns the secret-command sound effects on or off. Remembered next visit.", usage: [["sound", "toggle"], ["sound on", "turn on"], ["sound off", "turn off"], ["mute / unmute", "the same, shorter"]] },
+
+    hostname: { about: "A fake neofetch: system info for this terminal, with a live uptime counter." },
+    fortune: { about: "Cracks open a fortune cookie with lucky numbers." },
+    coffee: { about: "Brews a coffee. Spoiler: there isn't any." },
+    sudo: { about: "Tries to get admin rights. Denied.", usage: [["sudo <anything>", "permission denied"], ["sudo make me a sandwich", "its own secret"]] },
+    "sudo make me a sandwich": { about: "The classic. This time sudo works." },
+    "rm -rf /": { about: "Tries to delete the website. The website disagrees.", usage: [["rm -rf /", "the original"], ["rm -rf *  /  ~  /*", "also count"]] },
+    exit: { about: "Tries to log out. You can't. (Clicking the red dot on the terminal does this too.)" },
+    hack: { about: "Starts a Hollywood-style hacking sequence." },
+    hello: { about: "Say hi, get waved at." },
+    cd: { about: "Goes nowhere.", usage: [["cd <anything>", "you wander around for a bit"]] },
+    matrix: { about: "Digital rain falls over the page. You can keep typing." },
+    "42": { about: "The answer to life, the universe and everything. Ask the question.", aliases: [] },
+    wish: { about: "Make a wish on a shooting star.", usage: [["wish", "launch a meteor shower"]] },
+    explode: { about: "Self-destructs the terminal. It rebuilds itself afterwards." },
+    freerobux: { about: "Generates 99,999,999,999 Robux. Totally real. (It's a joke.)" },
+    sl: { about: "A train runs along the bottom of the page. A tribute to everyone who typed sl instead of ls." },
+    vim: { about: "Opens a fake vim editor. Getting out is the real challenge.", usage: [["i", "insert mode (type text)"], ["Esc", "back to normal mode"], [":", "command mode"], [":q!", "the way out"]] },
+    rickroll: { about: "A \"free gift card\" that is not a free gift card." },
+    blackhole: { about: "A black hole eats the sky and the terminal, then spits them back out." },
+    ping: { about: "A fake ping with a suspicious result.", usage: [["ping", "ping this terminal"], ["ping <anything>", "works with any address"]] },
+    konami: { about: "The cheat code: +30 lives, rainbow sky, shooting stars.", usage: [["konami", "type the command"], ["↑ ↑ ↓ ↓ ← → ← → B A", "or press the keys anywhere on the page"]] },
+    gravity: { about: "Turns gravity on. The text falls out of the terminal and you can drag it around.", usage: [["drag", "move the fallen text"], ["Esc / Put it back", "return everything"]] },
+    bsod: { about: "Crashes the terminal with a blue screen, then reboots it." },
+    cat: { about: "A cat shows up, lies down next to your text and bats it off the screen.", usage: [["cat <anything>", "also works"]] },
+    secrets: { about: "Lists every secret command and which ones you've found. Click one to run it.", usage: [["secrets", "show the tracker"]] }
+};
 
 const bootTime = performance.now();
 

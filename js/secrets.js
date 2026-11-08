@@ -1,11 +1,3 @@
-/*
- * Secret command effects: animated popups, full-screen effects, particles and sounds.
- * Every effect is a function registered in EFFECTS and triggered by `effect: "name"`
- * in commands.js. Popups that cover the page register as windows (so the terminal is
- * locked while they play and Esc closes them); ambient effects (matrix rain, confetti,
- * footsteps, meteor showers) let you keep typing.
- */
-
 import { play } from "./audio.js";
 import { registerWindow, unregisterWindow, shineify, reducedMotion } from "./windows.js";
 import { h } from "./dom.js";
@@ -13,10 +5,6 @@ import { h } from "./dom.js";
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = list => list[Math.floor(Math.random() * list.length)];
 const terminalEl = () => document.getElementById("terminal");
-
-/* ------------------------------------------------------------------ */
-/* discovery tracking                                                 */
-/* ------------------------------------------------------------------ */
 
 const STORE_KEY = "fz-secrets-found";
 
@@ -28,7 +16,6 @@ export function getFound() {
     }
 }
 
-/** Marks a secret as found. Shows an achievement toast the first time. */
 export function discover(name, total) {
     const found = getFound();
     if (found.has(name)) return false;
@@ -63,16 +50,8 @@ export function discover(name, total) {
     return true;
 }
 
-/* ------------------------------------------------------------------ */
-/* building blocks                                                    */
-/* ------------------------------------------------------------------ */
-
 const active = new Map();
 
-/**
- * Creates a full-screen layer. Returns a controller with timers that are
- * automatically cancelled when the layer closes.
- */
 function layer(id, className, content, { lock = true, ambient = false, pauseSky = false, closeOnClick = true, duration = 0, onClose } = {}) {
     active.get(id)?.close();
 
@@ -129,31 +108,28 @@ function layer(id, className, content, { lock = true, ambient = false, pauseSky 
     return api;
 }
 
-/** Slide-in notification card. */
-export function toast({ icon = "✦", title, text, duration = 3800, progress = null }) {
+export function toast({ icon = "", title, text, duration = 3800, progress = null }) {
     let host = document.getElementById("toast-host");
     if (!host) {
         host = h("div", { id: "toast-host" });
         document.body.appendChild(host);
     }
 
-    const card = h("div", { class: "toast sheen" },
-        h("div", { class: "toast-icon" }, icon),
+    const card = h("div", { class: "toast" },
         h("div", { class: "toast-body" },
             h("div", { class: "toast-title" }, title),
-            text ? h("div", { class: "toast-text" }, text) : null,
-            progress != null ? h("div", { class: "toast-bar" }, h("i", { style: `width:${Math.round(progress * 100)}%` })) : null));
+            text ? h("div", { class: "toast-text" }, text) : null),
+        progress != null ? h("div", { class: "toast-bar" }, h("i", { style: `width:${Math.round(progress * 100)}%` })) : null);
 
     host.appendChild(card);
     requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("show")));
 
     setTimeout(() => {
         card.classList.remove("show");
-        setTimeout(() => card.remove(), 500);
+        setTimeout(() => card.remove(), 400);
     }, duration);
 }
 
-/** Canvas particles: confetti bursts or falling emoji. */
 export function confetti({ count = 110, origin = { x: 0.5, y: 0.6 }, emoji = null, rain = false, duration = 3200, colors: palette = null } = {}) {
     if (reducedMotion) return;
 
@@ -246,10 +222,6 @@ export function confetti({ count = 110, origin = { x: 0.5, y: 0.6 }, emoji = nul
     requestAnimationFrame(frame);
 }
 
-/* ------------------------------------------------------------------ */
-/* the effects                                                        */
-/* ------------------------------------------------------------------ */
-
 const FORTUNES = [
     "A shooting star will cross your path. Make a wish.",
     "You will soon find a bug you wrote yourself.",
@@ -269,7 +241,6 @@ const FORTUNES = [
 
 const EFFECTS = {
 
-    /* ---------- fortune cookie ---------- */
     fortune() {
         const numbers = Array.from({ length: 6 }, () => Math.floor(rand(1, 60))).sort((a, b) => a - b).join(" · ");
 
@@ -291,7 +262,6 @@ const EFFECTS = {
         fx.later(() => { fx.el.classList.add("cracked"); play("chime"); }, 1250);
     },
 
-    /* ---------- coffee ---------- */
     coffee() {
         const fx = layer("coffee", "fx-coffee", `
             <div class="coffee-ui window">
@@ -319,7 +289,6 @@ const EFFECTS = {
         fx.later(() => { fx.el.classList.add("failed"); play("coffee"); }, 2300);
     },
 
-    /* ---------- sudo ---------- */
     sudo() {
         const fx = layer("sudo", "fx-sudo", `
             <div class="sudo-ui window">
@@ -333,14 +302,12 @@ const EFFECTS = {
         fx.later(() => fx.el.classList.add("shake"), 150);
     },
 
-    /* ---------- sandwich ---------- */
     sandwich() {
         play("nom");
         toast({ icon: "🥪", title: "Order up!", text: "One sandwich, coming right up.", duration: 3200 });
         confetti({ rain: true, emoji: "🥪", count: 46, duration: 4200 });
     },
 
-    /* ---------- rm -rf / ---------- */
     rm() {
         const term = terminalEl();
         const dirs = ["/bin", "/boot", "/etc", "/home/guest", "/lib", "/usr/bin", "/usr/lib", "/var/www", "/var/log", "/srv/fuz", "/opt/stars", "/sys", "/proc"];
@@ -390,7 +357,6 @@ const EFFECTS = {
         fx.later(() => fx.close(), 5600);
     },
 
-    /* ---------- exit / logout ---------- */
     exit() {
         const term = terminalEl();
         const fx = layer("exit", "fx-crt", `<div class="crt-text">NO SIGNAL</div>`, {
@@ -410,7 +376,6 @@ const EFFECTS = {
         fx.later(() => fx.close(), 2900);
     },
 
-    /* ---------- hack ---------- */
     hack() {
         const fx = layer("hack", "fx-hack", `
             <div class="hack-ui window">
@@ -472,7 +437,6 @@ const EFFECTS = {
         fx.later(() => fx.close(), 5600);
     },
 
-    /* ---------- hello ---------- */
     hello() {
         play("wave");
 
@@ -482,7 +446,6 @@ const EFFECTS = {
         confetti({ count: 90, origin: { x: 0.5, y: 0.75 } });
     },
 
-    /* ---------- cd ---------- */
     cd() {
         const steps = 12;
         const html = Array.from({ length: steps }, (_, i) =>
@@ -493,7 +456,6 @@ const EFFECTS = {
         for (let i = 0; i < steps; i++) fx.later(() => play("step"), i * 240);
     },
 
-    /* ---------- matrix ---------- */
     matrix() {
         let raf = 0;
 
@@ -546,7 +508,6 @@ const EFFECTS = {
 
         if (!reducedMotion) raf = requestAnimationFrame(draw);
 
-        // typed message
         const lines = ["Wake up, Neo...", "The Matrix has you...", "Follow the white rabbit. 🐇"];
         let delay = 700;
 
@@ -559,7 +520,6 @@ const EFFECTS = {
         });
     },
 
-    /* ---------- 42 ---------- */
     deep() {
         const fx = layer("deep", "fx-deep", `
             <div class="deep-ui">
@@ -590,7 +550,6 @@ const EFFECTS = {
         fx.later(() => fx.close(), 9800);
     },
 
-    /* ---------- explode ---------- */
     explode() {
         if (reducedMotion) {
             toast({ icon: "\uD83D\uDCA5", title: "Boom.", text: "Explosion skipped because reduced motion is on.", duration: 3200 });
@@ -618,14 +577,12 @@ const EFFECTS = {
         const shardHost = fx.el.querySelector(".shards");
         const shockwave = fx.el.querySelector(".shockwave");
 
-        // 1) the fuse: terminal rumbles harder and harder
         play("rumble");
         term.classList.add("rumbling");
         const t0 = performance.now();
         fx.every(() => term.style.setProperty("--r", Math.min(1, (performance.now() - t0) / 1500).toFixed(2)), 40);
         [0, 300, 560, 760, 900, 1020, 1120, 1210, 1290, 1360, 1420, 1470].forEach(ms => fx.later(() => play("blip"), ms));
 
-        // 2) detonate: swap the terminal for shards of itself and throw them
         fx.later(() => {
             term.classList.remove("rumbling");
             const rect = term.getBoundingClientRect();
@@ -639,8 +596,6 @@ const EFFECTS = {
                 y: j * ch + (j > 0 && j < rows ? rand(-0.34, 0.34) * ch : 0)
             })));
 
-            // One light template: lines scrolled out of view are emptied (same height), so a long
-            // scrollback no longer means 20 copies of hundreds of nodes.
             const bodyEl = term.querySelector("#terminal-body");
             const tpl = term.cloneNode(true);
             tpl.classList.remove("rumbling", "locked");
@@ -741,7 +696,6 @@ const EFFECTS = {
             raf = requestAnimationFrame(step);
         }, 1500);
 
-        // 3) put the terminal back together
         fx.later(() => {
             shardHost.replaceChildren();
             term.style.visibility = "";
@@ -753,7 +707,6 @@ const EFFECTS = {
         fx.later(() => fx.close(), 4700);
     },
 
-    /* ---------- freerobux ---------- */
     robux() {
         const target = 99999999999;
 
@@ -809,7 +762,6 @@ const EFFECTS = {
         fx.later(() => fx.el.classList.add("joke"), 6200);
     },
 
-    /* ---------- sl (the train) ---------- */
     sl() {
         if (reducedMotion) {
             toast({ icon: "🚂", title: "Choo choo", text: "The train skipped your screen (reduced motion).", duration: 3000 });
@@ -830,7 +782,6 @@ const EFFECTS = {
         [300, 480, 660, 840, 1020, 1200, 1380, 1560, 1740, 1920, 2100, 2280, 2460, 2640, 2820, 3000, 3180, 3360, 3540, 3720].forEach(ms => fx.later(() => play("step"), ms));
     },
 
-    /* ---------- vim (the trap) ---------- */
     vim() {
         const text = ["Dear diary,", "today I opened vim.", "I have been here for a while."];
         let mode = "normal";
@@ -845,19 +796,21 @@ const EFFECTS = {
                     <div class="title">vim - notes.txt</div>
                 </div>
                 <pre class="vim-screen"></pre>
-                <div class="vim-status"><span class="vim-mode"></span><span class="vim-msg"></span></div>
+                <div class="vim-status"><span class="vim-file">notes.txt [+]</span><span class="vim-mode"></span></div>
+                <div class="vim-cmdline"></div>
             </div>`, { closeOnClick: false, onClose: () => off() });
 
         const screen = fx.el.querySelector(".vim-screen");
         const modeEl = fx.el.querySelector(".vim-mode");
-        const msgEl = fx.el.querySelector(".vim-msg");
+        const cmdEl = fx.el.querySelector(".vim-cmdline");
 
         const render = () => {
-            const rows = text.map((line, i) => line + (i === text.length - 1 ? "█" : ""));
+            const rows = text.map((line, i) => line + (mode !== "command" && i === text.length - 1 ? "█" : ""));
             while (rows.length < 12) rows.push("~");
             screen.textContent = rows.join("\n");
-            modeEl.textContent = mode === "command" ? `:${cmd}█` : mode === "insert" ? "-- INSERT --" : "";
-            msgEl.textContent = msg;
+            modeEl.textContent = mode === "insert" ? "-- INSERT --" : mode === "command" ? "-- COMMAND --" : "NORMAL";
+            cmdEl.textContent = mode === "command" ? `:${cmd}█` : msg;
+            cmdEl.classList.toggle("typing", mode === "command");
         };
 
         const run = () => {
@@ -879,7 +832,7 @@ const EFFECTS = {
 
         const onKey = event => {
             if (event.ctrlKey || event.metaKey || event.altKey) return;
-            if (event.key === "F12") return;
+            if (event.key === "Shift" || event.key === "CapsLock") return;
             event.preventDefault();
             event.stopImmediatePropagation();
             play("tick");
@@ -898,7 +851,7 @@ const EFFECTS = {
             } else {
                 if (event.key === "Escape") { mode = "normal"; cmd = ""; }
                 else if (event.key === "Enter") run();
-                else if (event.key === "Backspace") cmd = cmd.slice(0, -1);
+                else if (event.key === "Backspace") { if (cmd) cmd = cmd.slice(0, -1); else mode = "normal"; }
                 else if (event.key.length === 1 && cmd.length < 16) cmd += event.key;
             }
             render();
@@ -907,15 +860,14 @@ const EFFECTS = {
         window.addEventListener("keydown", onKey, true);
         off = () => window.removeEventListener("keydown", onKey, true);
 
-        fx.el.querySelector(".traffic .red").addEventListener("click", () => { msg = "Nice try. Use :q!"; play("error"); render(); });
+        fx.el.querySelector(".traffic .red").addEventListener("click", () => { msg = "Nice try. Press Esc, then type :q! and Enter"; play("error"); render(); });
         shineify(fx.el.querySelector(".vim-ui"), { delay: 0.4, duration: 7 });
         render();
 
-        fx.later(() => { msg = "hint: the exit is :q!"; render(); }, 9000);
+        fx.later(() => { if (mode !== "command") { msg = "hint: press Esc, then type :q! and press Enter"; render(); } }, 9000);
         fx.later(() => { fx.close(); toast({ icon: "🙏", title: "Rescued", text: "A kind stranger closed vim for you.", duration: 3600 }); }, 40000);
     },
 
-    /* ---------- rickroll ---------- */
     rickroll() {
         const frames = ["\\o/\n |\n/ \\", " o/\n/|\n/ >", "\\o \n |\\\n< \\", " o \n/|\\\n/ \\"];
 
@@ -956,9 +908,9 @@ const EFFECTS = {
         }, 3600);
     },
 
-    /* ---------- blackhole ---------- */
     blackhole() {
         const term = terminalEl();
+        const scene = document.getElementById("scene");
         if (!term || reducedMotion) {
             toast({ icon: "🕳️", title: "Singularity", text: "Skipped (reduced motion).", duration: 3000 });
             return;
@@ -980,23 +932,26 @@ const EFFECTS = {
             onClose: () => {
                 cancelAnimationFrame(raf);
                 term.classList.remove("sucked", "spat");
+                scene?.classList.remove("bh-eat", "bh-spit");
+                document.querySelector(".vignette")?.classList.remove("bh-hide");
             }
         });
 
         const maxD = Math.hypot(cx, cy);
-        const parts = Array.from({ length: 240 }, () => ({
-            a: rand(0, Math.PI * 2), d: rand(90, maxD), s: rand(0.8, 2.2), v: rand(0.8, 1.3),
-            c: pick(["#ffffff", "#bcd0ff", "#ffe2b0", "#e0c8ff"]), px: 0, py: 0, out: false
+        const parts = Array.from({ length: 70 }, () => ({
+            a: rand(0, Math.PI * 2), d: rand(120, maxD), s: rand(0.8, 1.8), v: rand(0.8, 1.3),
+            c: pick(["#ffffff", "#bcd0ff", "#ffe2b0"]), out: false
         }));
 
         play("whoosh");
-        fx.later(() => { term.classList.add("sucked"); play("deep"); }, 700);
+        fx.later(() => { scene?.classList.add("bh-eat"); term.classList.add("sucked"); play("deep"); }, 700);
         fx.later(() => {
+            scene?.classList.remove("bh-eat");
+            scene?.classList.add("bh-spit");
             term.classList.remove("sucked");
             term.classList.add("spat");
-            parts.forEach(p => { p.out = true; p.d = rand(30, 80); p.v = rand(500, 1200); });
+            parts.forEach(p => { p.out = true; p.d = rand(30, 80); p.v = rand(500, 1100); });
             play("boom");
-            confetti({ count: 40, origin: { x: 0.5, y: 0.5 }, colors: ["#ffffff", "#b79cff", "#8ab4ff"], duration: 1800 });
         }, 3700);
         fx.later(() => fx.close(), 5000);
 
@@ -1014,26 +969,22 @@ const EFFECTS = {
             const r = 64 * grow * shrink;
 
             for (const p of parts) {
-                p.px = cx + Math.cos(p.a) * p.d;
-                p.py = cy + Math.sin(p.a) * p.d * 0.9;
+                const px = cx + Math.cos(p.a) * p.d;
+                const py = cy + Math.sin(p.a) * p.d * 0.9;
 
-                if (p.out) {
-                    p.d += p.v * dt;
-                } else {
-                    const pull = t < 0.7 ? 0.1 : 1;
-                    p.a += (1.2 + 260 / p.d) * dt * pull;
-                    p.d -= (16 + 9000 / p.d) * dt * p.v * pull;
-                    if (p.d < r * 0.8) { p.d = rand(maxD * 0.6, maxD); p.a = rand(0, 6.28); if (t > 3) p.d = 9999; }
+                if (p.out) p.d += p.v * dt;
+                else if (t > 0.7) {
+                    p.a += (1.2 + 260 / p.d) * dt;
+                    p.d -= (16 + 9000 / p.d) * dt * p.v;
+                    if (p.d < r * 0.8) p.d = 9999;
                 }
 
-                const nx = cx + Math.cos(p.a) * p.d;
-                const ny = cy + Math.sin(p.a) * p.d * 0.9;
                 ctx.strokeStyle = p.c;
                 ctx.globalAlpha = Math.min(1, p.d / 160);
                 ctx.lineWidth = p.s;
                 ctx.beginPath();
-                ctx.moveTo(p.px, p.py);
-                ctx.lineTo(nx, ny);
+                ctx.moveTo(px, py);
+                ctx.lineTo(cx + Math.cos(p.a) * p.d, cy + Math.sin(p.a) * p.d * 0.9);
                 ctx.stroke();
             }
 
@@ -1072,7 +1023,6 @@ const EFFECTS = {
         raf = requestAnimationFrame(frame);
     },
 
-    /* ---------- ping ---------- */
     ping() {
         if (reducedMotion) return;
         const fx = layer("ping", "fx-ping", `<i></i><i></i><i></i>`, { ambient: true, lock: false, duration: 3600 });
@@ -1081,7 +1031,6 @@ const EFFECTS = {
         fx.later(() => play("sonar"), 1800);
     },
 
-    /* ---------- konami ---------- */
     konami() {
         const fx = layer("konami", "fx-konami", `<div class="konami-text">+30 LIVES</div><div class="konami-sub">CHEAT CODE ACTIVATED</div>`, { ambient: true, lock: false, duration: 6500 });
         play("levelup");
@@ -1091,11 +1040,9 @@ const EFFECTS = {
         fx.later(() => confetti({ count: 120, origin: { x: 0.8, y: 0.8 } }), 1100);
     },
 
-    /* ---------- gravity ---------- */
     gravity() {
         const body = document.getElementById("terminal-body");
-        const term = terminalEl();
-        if (!body || !term) return;
+        if (!body) return;
 
         if (reducedMotion) {
             toast({ icon: "🍎", title: "Gravity", text: "Things would have fallen (reduced motion).", duration: 3000 });
@@ -1103,63 +1050,103 @@ const EFFECTS = {
         }
 
         const view = body.getBoundingClientRect();
-        const selector = ".banner, #output .line, #output .card, #output .social-card, #output .social-list > *, #terminal-body > .line:not(#input-line)";
-        const items = [...body.querySelectorAll(selector)]
-            .filter(el => !el.closest(".social-list") || el.parentElement.classList.contains("social-list"))
+        const selector = ".banner, #output .line, #output .card, #output .social-card, #terminal-body > .line:not(#input-line)";
+        let candidates = [...body.querySelectorAll(selector)];
+        candidates = candidates.filter(el => !candidates.some(other => other !== el && other.contains(el)));
+
+        const items = candidates
             .map(el => ({ el, r: el.getBoundingClientRect() }))
             .filter(({ r }) => r.height > 0 && r.bottom > view.top && r.top < view.bottom)
-            .sort((a, b) => b.r.bottom - a.r.bottom);
+            .slice(-26);
 
-        const anims = [];
-        let floor = view.bottom - 10;
+        const host = h("div", { class: "gravity-host" });
+        document.body.appendChild(host);
+        const pieces = [];
+        let z = 10;
 
-        const fx = layer("gravity", "fx-gravity", "", {
-            ambient: true,
-            duration: 6200,
-            onClose: () => anims.forEach(a => a.cancel())
-        });
+        const finish = () => {
+            pieces.forEach(p => {
+                const now = p.el.getBoundingClientRect();
+                const dx = p.origin.left - now.left;
+                const dy = p.origin.top - now.top;
+                p.el.animate([{ transform: "none" }, { transform: `translate(${dx}px, ${dy}px)` }], { duration: 520, easing: "cubic-bezier(.2, .9, .2, 1)", fill: "forwards" });
+                p.inner.animate([{ transform: p.inner.style.transform || "none" }, { transform: "none" }], { duration: 520, fill: "forwards" });
+            });
+            setTimeout(() => {
+                pieces.forEach(p => { p.source.style.visibility = ""; });
+                host.remove();
+            }, 560);
+        };
 
+        const fx = layer("gravity", "fx-gravity", "", { ambient: true, duration: 120000, onClose: finish });
         play("whoosh");
 
         items.forEach(({ el, r }, i) => {
-            const targetBottom = floor + rand(-3, 3);
-            floor -= Math.max(10, Math.min(r.height * 0.55, 26));
-            const dy = Math.max(0, targetBottom - r.bottom);
-            const dx = rand(-70, 70);
-            const rot = rand(-14, 14);
-            const delay = 300 + i * 38 + rand(0, 120);
+            let width = r.width;
+            if (el.classList.contains("line")) {
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                width = Math.min(r.width, Math.ceil(range.getBoundingClientRect().width) + 4);
+            }
 
-            const fall = el.animate([
-                { transform: "none" },
-                { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)` }
-            ], { duration: 650 + dy * 0.6, delay, easing: "cubic-bezier(.5, 0, 1, .55)", fill: "forwards" });
-            anims.push(fall);
+            const piece = h("div", { class: "g-piece" });
+            const inner = h("div", { class: "g-inner" });
+            inner.appendChild(el.cloneNode(true));
+            piece.appendChild(inner);
+            piece.style.cssText = `left:${r.left}px;top:${r.top}px;width:${width}px;`;
+            host.appendChild(piece);
+            el.style.visibility = "hidden";
 
-            fall.finished.then(() => {
+            const entry = { el: piece, inner, source: el, origin: { left: r.left, top: r.top }, w: width, h: r.height };
+            pieces.push(entry);
+
+            const targetLeft = Math.max(10, Math.min(window.innerWidth - width - 10, r.left + rand(-260, 260)));
+            const dx = targetLeft - r.left;
+            const dy = Math.max(0, window.innerHeight - r.height - 30 - rand(0, 40) - r.top);
+            const rot = rand(-16, 16);
+            const delay = 250 + i * 45 + rand(0, 100);
+            const dur = 520 + Math.sqrt(dy) * 28;
+
+            const ax = piece.animate([{ transform: "none" }, { transform: `translateX(${dx}px)` }], { duration: dur, delay, easing: "cubic-bezier(.2, .6, .4, 1)", fill: "both" });
+            const ay = inner.animate([{ transform: "none" }, { transform: `translateY(${dy}px) rotate(${rot}deg)` }], { duration: dur, delay, easing: "cubic-bezier(.55, 0, 1, .5)", fill: "both" });
+
+            ay.finished.then(() => {
                 if (fx.closed) return;
-                const bounce = el.animate([
-                    { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)` },
-                    { transform: `translate(${dx}px, ${dy - 14}px) rotate(${rot * 0.6}deg)`, offset: 0.4 },
-                    { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)` }
-                ], { duration: 280, easing: "ease-out", fill: "forwards" });
-                anims.push(bounce);
+                piece.style.left = `${r.left + dx}px`;
+                piece.style.top = `${r.top + dy}px`;
+                inner.style.transform = `rotate(${rot}deg)`;
+                ax.cancel();
+                ay.cancel();
+                piece.classList.add("landed");
                 if (i % 3 === 0) play("stamp");
             }).catch(() => {});
         });
 
-        // gravity switches off: everything floats back
-        fx.later(() => {
-            play("poweron");
-            anims.splice(0).forEach(a => a.cancel());
-            items.forEach(({ el }, i) => {
-                const rise = el.animate([{ transform: "translateY(30px)", opacity: 0.3 }, { transform: "none", opacity: 1 }],
-                    { duration: 600, delay: i * 25, easing: "cubic-bezier(.2, .9, .2, 1)", fill: "backwards" });
-                anims.push(rise);
-            });
-        }, 4800);
+        let drag = null;
+        host.addEventListener("pointerdown", event => {
+            const piece = event.target.closest(".g-piece.landed");
+            if (!piece) return;
+            const rect = piece.getBoundingClientRect();
+            drag = { piece, dx: event.clientX - rect.left, dy: event.clientY - rect.top };
+            piece.style.zIndex = String(++z);
+            piece.classList.add("dragging");
+            piece.setPointerCapture(event.pointerId);
+            event.preventDefault();
+        });
+        host.addEventListener("pointermove", event => {
+            if (!drag) return;
+            drag.piece.style.left = `${event.clientX - drag.dx}px`;
+            drag.piece.style.top = `${event.clientY - drag.dy}px`;
+        });
+        const drop = () => { drag?.piece.classList.remove("dragging"); drag = null; };
+        host.addEventListener("pointerup", drop);
+        host.addEventListener("pointercancel", drop);
+
+        const hint = h("div", { class: "g-hint" }, "Drag the text around.", h("button", { type: "button" }, "Put it back"));
+        hint.querySelector("button").addEventListener("click", () => fx.close());
+        host.appendChild(hint);
     },
 
-    /* ---------- bsod ---------- */
     bsod() {
         const term = terminalEl();
         const fx = layer("bsod", "fx-bsod", `
@@ -1199,19 +1186,21 @@ const EFFECTS = {
         }, 6400);
     },
 
-    /* ---------- cat ---------- */
     cat() {
-        if (reducedMotion) {
+        const victim = [...document.querySelectorAll("#output .result .line")].pop() || null;
+
+        if (reducedMotion || !victim) {
             toast({ icon: "🐱", title: "Meow", text: "A cat appeared. Briefly.", duration: 3000 });
             return;
         }
 
-        const inputRect = document.getElementById("input-line")?.getBoundingClientRect();
-        const victim = [...document.querySelectorAll("#output .result .line")].pop() || null;
-        if (!inputRect) return;
+        const r = victim.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(victim);
+        const textRight = range.getBoundingClientRect().right;
 
         const catSvg = `
-            <svg class="cat-svg" viewBox="0 0 34 22" shape-rendering="crispEdges" aria-hidden="true">
+            <svg class="cat-svg" viewBox="0 0 40 22" shape-rendering="crispEdges" aria-hidden="true">
                 <g class="cat-tail"><rect x="1" y="5" width="2" height="6" fill="#d9893a"/><rect x="3" y="9" width="3" height="2" fill="#d9893a"/></g>
                 <rect x="5" y="8" width="18" height="9" fill="#e8a05a"/>
                 <rect x="9" y="8" width="2" height="9" fill="#d9893a"/><rect x="14" y="8" width="2" height="9" fill="#d9893a"/>
@@ -1222,54 +1211,56 @@ const EFFECTS = {
                 <rect x="26" y="9" width="2" height="1" fill="#e07a8f"/>
                 <g class="cat-legs-a"><rect x="6" y="17" width="3" height="5" fill="#d9893a"/><rect x="18" y="17" width="3" height="5" fill="#d9893a"/></g>
                 <g class="cat-legs-b"><rect x="11" y="17" width="3" height="5" fill="#d9893a"/><rect x="22" y="17" width="3" height="5" fill="#d9893a"/></g>
+                <g class="cat-paw"><rect x="30" y="10" width="5" height="3" fill="#e8a05a"/><rect x="34" y="10" width="3" height="3" fill="#f6c6a0"/></g>
             </svg>`;
 
-        const fx = layer("cat", "fx-cat", `<div class="cat walking">${catSvg}<div class="cat-bubble">meow</div></div>`, { ambient: true, lock: true, duration: 12500 });
+        const fx = layer("cat", "fx-cat", `<div class="cat flipped"><div class="cat-flip">${catSvg}</div><div class="cat-bubble">meow</div></div>`, { ambient: true, duration: 11500 });
         const cat = fx.el.querySelector(".cat");
-        const size = 100;
-        const y = Math.min(window.innerHeight - size - 4, inputRect.top - size + 20);
-        const stopX = Math.min(window.innerWidth - size - 20, inputRect.left + 230);
+        const size = 110;
+        const svgH = size * 22 / 40;
+        const left = Math.min(window.innerWidth - size - 10, textRight + 18);
+        const top = Math.max(8, r.bottom - svgH + 6);
+        let fall = null;
 
-        cat.style.cssText = `top:${y}px;left:${-size - 10}px;width:${size}px`;
-        let victimAnim = null;
-
+        cat.style.cssText = `left:${left}px;top:${-svgH - 20}px;width:${size}px`;
         requestAnimationFrame(() => requestAnimationFrame(() => {
-            cat.style.transition = "left 3.2s linear";
-            cat.style.left = `${stopX}px`;
+            cat.style.transition = "top .65s cubic-bezier(.5, 0, 1, .6)";
+            cat.style.top = `${top}px`;
         }));
 
-        [400, 800, 1200, 1600, 2000, 2400, 2800].forEach(ms => fx.later(() => play("tick"), ms));
+        fx.later(() => { cat.classList.add("land"); play("stamp"); }, 700);
+        fx.later(() => { cat.classList.remove("land"); cat.classList.add("lying"); }, 1300);
+        fx.later(() => cat.classList.add("pawing"), 1900);
+
+        const nudge = (ms, big) => fx.later(() => {
+            play("tick");
+            if (!big) victim.animate([{ transform: "none" }, { transform: "translateX(-12px)" }, { transform: "none" }], { duration: 260, easing: "ease-out" });
+            else {
+                play("crack");
+                fall = victim.animate([
+                    { transform: "none", opacity: 1 },
+                    { transform: "translate(-30px, -2px)", opacity: 1, offset: 0.2 },
+                    { transform: "translate(-60px, 280px) rotate(-35deg)", opacity: 0 }
+                ], { duration: 1300, easing: "cubic-bezier(.5, 0, .8, .6)", fill: "forwards" });
+            }
+        }, ms);
+
+        nudge(2220, false);
+        nudge(2920, false);
+        nudge(3620, true);
+
+        fx.later(() => { cat.classList.remove("pawing", "lying"); cat.classList.add("meow"); play("wave"); }, 4300);
 
         fx.later(() => {
-            cat.classList.remove("walking");
-            cat.classList.add("sitting");
-            cat.classList.add("meow");
-            play("wave");
-        }, 3300);
-
-        fx.later(() => {
-            if (!victim) return;
-            const r = victim.getBoundingClientRect();
-            const dx = Math.max(0, stopX + 50 - r.left - 80);
-            victimAnim = victim.animate([
-                { transform: "none", opacity: 1 },
-                { transform: `translate(${dx}px, -4px)`, opacity: 1, offset: 0.35 },
-                { transform: `translate(${dx + 40}px, 260px) rotate(40deg)`, opacity: 0 }
-            ], { duration: 1500, easing: "cubic-bezier(.5, 0, .8, .6)", fill: "forwards" });
-            play("crack");
-        }, 5200);
-
-        fx.later(() => {
-            victimAnim?.cancel();
-            victim?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
-            cat.classList.remove("sitting", "meow");
+            fall?.cancel();
+            victim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
+            cat.classList.remove("meow", "flipped");
             cat.classList.add("walking");
-            cat.style.transition = "left 2.8s linear";
+            cat.style.transition = "left 2.6s linear";
             cat.style.left = `${window.innerWidth + 20}px`;
-        }, 8000);
+        }, 5800);
     },
 
-    /* ---------- wish ---------- */
     wish() {
         play("meteor");
         for (let i = 1; i < 7; i++) setTimeout(() => play("meteor"), i * 900);
@@ -1279,7 +1270,6 @@ const EFFECTS = {
     }
 };
 
-/** Plays the named effect. Never throws: a broken effect must not break the terminal. */
 export function runEffect(name) {
     const effect = EFFECTS[name];
     if (!effect) return;

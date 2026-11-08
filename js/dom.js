@@ -1,5 +1,3 @@
-/* Tiny DOM builder: h("div", {class: "x"}, child, "text"). Text is always inserted safely. */
-
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 export function h(tag, attrs = {}, ...children) {

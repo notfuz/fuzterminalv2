@@ -22,10 +22,6 @@ let index = 0;
 let media = null;
 let renderToken = 0;
 
-/* ------------------------------------------------------------------ */
-/* gallery window                                                     */
-/* ------------------------------------------------------------------ */
-
 export async function openGallery() {
     registerWindow("gallery", closeGallery, { pauseSky: true });
     showOverlay(overlay);
@@ -35,7 +31,6 @@ export async function openGallery() {
     content.replaceChildren(h("div", { class: "gallery-empty" }, "Loading albums..."));
 
     try {
-        // fetched once per visit; reopening the gallery is instant
         albumsPromise ||= loadAlbums();
         albums = await albumsPromise;
     } catch (error) {
@@ -88,7 +83,6 @@ function buildTile(item, albumIdx, itemIdx, extra = 0) {
         img.src = thumb;
         tile.append(img);
     } else if (isVideo) {
-        // no poster generated: only fetch metadata, and a frame just after the start
         const video = h("video", { class: "gallery-preview-media", muted: true, playsInline: true, preload: "metadata" });
         video.muted = true;
         video.addEventListener("loadeddata", () => tile.classList.add("loaded"), { once: true });
@@ -139,10 +133,6 @@ overlay.addEventListener("click", event => {
 });
 
 overlay.querySelector(".traffic .red")?.addEventListener("click", closeGallery);
-
-/* ------------------------------------------------------------------ */
-/* lightbox                                                           */
-/* ------------------------------------------------------------------ */
 
 const cam = { x: 0, y: 0, s: 1 };
 const MAX_SCALE = 6;
@@ -206,7 +196,6 @@ function zoomAt(clientX, clientY, nextScale) {
     schedule();
 }
 
-/** Tears down the current media so nothing keeps playing or downloading. */
 function destroyMedia() {
     renderToken++;
 
@@ -247,7 +236,7 @@ function closeLightbox() {
         return;
     }
 
-    destroyMedia(); // pauses + unloads video BEFORE hiding, whatever way we got here
+    destroyMedia(); // stop the video before hiding
     hideOverlay(lightbox);
     unregisterWindow("lightbox");
 }
@@ -300,7 +289,6 @@ function renderItem() {
     prevButton.hidden = single;
     nextButton.hidden = single;
 
-    // warm the neighbours (images only) once the browser is idle
     const warm = () => [1, -1].forEach(step => {
         const neighbour = items[(index + step + items.length) % items.length];
         if (neighbour && neighbour.type !== "video") new Image().src = neighbour.src;
@@ -320,7 +308,6 @@ prevButton.addEventListener("click", () => step(-1));
 nextButton.addEventListener("click", () => step(1));
 closeButton.addEventListener("click", () => closeLightbox());
 
-/* backdrop click closes - but not when a drag merely ended over the backdrop */
 let downOnBackdrop = false;
 
 lightbox.addEventListener("pointerdown", event => {
@@ -330,8 +317,6 @@ lightbox.addEventListener("pointerdown", event => {
 lightbox.addEventListener("click", event => {
     if (downOnBackdrop && (event.target === lightbox || event.target === viewport)) closeLightbox();
 });
-
-/* ---------- zoom + pan + pinch + swipe (pointer events: mouse and touch) ---------- */
 
 const pointers = new Map();
 let dragStart = null;
@@ -380,7 +365,6 @@ function endPointer(event) {
 
     if (pointers.size < 2) pinchStart = null;
 
-    // quick horizontal swipe flips through the album when not zoomed
     if (swipeStart && event.type === "pointerup" && cam.s <= 1.05) {
         const dx = event.clientX - swipeStart.x;
         const dy = event.clientY - swipeStart.y;
@@ -420,7 +404,6 @@ document.addEventListener("keydown", event => {
     else if (event.key === "0") resetCamera(true);
 });
 
-// a video should never keep playing in a background tab
 document.addEventListener("visibilitychange", () => {
     if (document.hidden && media instanceof HTMLVideoElement) media.pause();
 });

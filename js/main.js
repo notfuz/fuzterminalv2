@@ -1,14 +1,3 @@
-/*
- * Sky renderer: starfield + shooting stars + constellations on one canvas.
- *
- * Performance notes
- *  - renders at the device pixel ratio (capped at 2) so stars are crisp but not wasteful
- *  - the nebula / milky way is rendered once per resize, not per frame
- *  - the loop is paused when the tab is hidden or a full-screen window (gallery, profile)
- *    covers the sky
- *  - prefers-reduced-motion gets a single static frame
- */
-
 import { Starfield } from "./stars.js";
 import { Constellations } from "./constellations.js";
 
@@ -64,7 +53,6 @@ window.addEventListener("pointermove", event => {
 
 document.addEventListener("pointerleave", () => { mouse.active = false; });
 
-// click empty space for a shooting star
 document.addEventListener("pointerdown", event => {
     if (reduced.matches || skyPaused) return;
     if (event.target.closest("#terminal, .overlay, .fx-overlay, .toast")) return;
@@ -128,7 +116,6 @@ reduced.addEventListener?.("change", () => {
     reduced.matches ? stop() : start();
 });
 
-// terminal.js uses this for secrets (`wish`) and `hostname`
 window.__sky = {
     get stars() { return sky.count; },
     get constellations() { return constellations.count; },

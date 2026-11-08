@@ -1,4 +1,4 @@
-import commands, { secretNames } from "./commands.js";
+import commands, { secretNames, DOCS } from "./commands.js";
 import { h } from "./dom.js";
 import { openGallery } from "./gallery.js";
 import { openProfile } from "./profile.js";
@@ -13,10 +13,6 @@ const input = document.getElementById("real-input");
 const before = document.getElementById("t-before");
 const cursor = document.getElementById("t-cursor");
 const after = document.getElementById("t-after");
-
-/* ------------------------------------------------------------------ */
-/* locking: no typing while a window is open or a command is "busy"   */
-/* ------------------------------------------------------------------ */
 
 let windowLocked = false;
 let busy = false;
@@ -44,10 +40,6 @@ window.addEventListener("fz:windows", event => {
     applyLock();
 });
 
-/* ------------------------------------------------------------------ */
-/* input rendering                                                    */
-/* ------------------------------------------------------------------ */
-
 function renderInput() {
     const value = input.value;
     const pos = Math.min(input.selectionStart ?? value.length, value.length);
@@ -66,15 +58,6 @@ function scrollBottom() {
     body.scrollTop = body.scrollHeight;
 }
 
-/* ------------------------------------------------------------------ */
-/* output                                                             */
-/* ------------------------------------------------------------------ */
-
-/**
- * The prompt is built exactly the same way for the live input line and for echoed
- * commands, and both lines share the .cmdline layout. That is what keeps the command
- * from shifting (or gaining a stray space) when you press enter.
- */
 function promptEl() {
     return h("span", { class: "prompt" },
         h("span", { class: "user" }, "fuz"), "@", h("span", { class: "host" }, "terminal"), ":~$");
@@ -111,10 +94,6 @@ function printLink({ text, href }) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-/* ------------------------------------------------------------------ */
-/* command lookup                                                     */
-/* ------------------------------------------------------------------ */
-
 const lookup = new Map();
 
 for (const [key, cmd] of Object.entries(commands)) {
@@ -126,7 +105,6 @@ function findCommand(normalized) {
     const exact = lookup.get(normalized);
     if (exact) return { ...exact, args: [] };
 
-    // "sound off", "cd ..", "sudo anything"
     const [first, ...args] = normalized.split(" ");
     const byName = lookup.get(first);
     return byName ? { ...byName, args } : null;
@@ -171,10 +149,6 @@ function suggest(word) {
     return best;
 }
 
-/* ------------------------------------------------------------------ */
-/* built-in output                                                    */
-/* ------------------------------------------------------------------ */
-
 function helpCard() {
     const rows = [
         ...Object.entries(commands).filter(([, c]) => !c.hidden).map(([name, c]) => [name, c.description]),
@@ -192,12 +166,40 @@ function helpCard() {
         h("div", { class: "help-foot" },
             h("span", {}, "↑/↓ history"),
             h("span", {}, "Tab autocomplete"),
+            h("span", {}, "help <command> for details"),
             h("span", {}, "there are hidden commands ✦")));
 }
 
-/* ------------------------------------------------------------------ */
-/* running commands                                                   */
-/* ------------------------------------------------------------------ */
+function helpTopic(query) {
+    const q = query.trim();
+    const alias = { cls: "clear" };
+    let key = DOCS[q] ? q : alias[q] || lookup.get(q)?.key;
+    if (!key || !DOCS[key]) key = lookup.get(q.split(" ")[0])?.key || alias[q.split(" ")[0]];
+
+    if (!key || !DOCS[key]) {
+        return h("div", { class: "card help-card" },
+            h("div", { class: "help-title" }, `No help for "${q}"`),
+            h("div", { class: "help-foot" }, h("span", {}, "Type "), cmdButton("help"), h("span", {}, " to see every command.")));
+    }
+
+    const doc = DOCS[key];
+    const cmd = commands[key];
+    const names = [...(doc.aliases ?? cmd?.aliases ?? [])];
+    const rows = doc.usage || [];
+
+    return h("div", { class: "card help-card sheen" },
+        h("div", { class: "help-title" }, key, cmd?.secret ? h("span", { class: "help-tag" }, "secret") : null),
+        h("div", { class: "help-about" }, doc.about),
+        rows.length ? h("div", { class: "help-grid" }, rows.map(([usage, text]) => [
+            h("code", { class: "help-usage" }, usage),
+            h("span", { class: "command-description" }, text)
+        ])) : null,
+        names.length ? h("div", { class: "help-foot" }, h("span", {}, "also works: " + names.join(", "))) : null);
+}
+
+function cmdButton(name) {
+    return h("button", { class: "cmd-chip", type: "button", "data-cmd": name }, name);
+}
 
 async function launch(steps, open) {
     busy = true;
@@ -257,6 +259,11 @@ async function execute(normalized) {
         return;
     }
 
+    if (normalized.startsWith("help ")) {
+        add(helpTopic(normalized.slice(5)));
+        return;
+    }
+
     const found = findCommand(normalized);
 
     if (!found) {
@@ -313,16 +320,11 @@ async function submit(raw) {
     await execute(normalized);
 }
 
-/** Used by clickable chips (help, secrets, about). */
 function runTyped(name) {
     if (isLocked()) return;
     resetInput();
     submit(name);
 }
-
-/* ------------------------------------------------------------------ */
-/* keyboard                                                           */
-/* ------------------------------------------------------------------ */
 
 function setValue(value) {
     input.value = value;
@@ -342,7 +344,6 @@ function complete() {
         return;
     }
 
-    // longest common prefix
     let prefix = matches[0];
     for (const name of matches) while (!name.startsWith(prefix)) prefix = prefix.slice(0, -1);
     if (prefix.length > value.length) setValue(prefix);
@@ -398,7 +399,6 @@ input.addEventListener("keydown", event => {
             return;
     }
 
-    // caret may move (arrows, home, end) after the browser handles the key
     requestAnimationFrame(renderInput);
 });
 
@@ -406,15 +406,10 @@ input.addEventListener("input", renderInput);
 input.addEventListener("keyup", renderInput);
 input.addEventListener("click", renderInput);
 
-/* ------------------------------------------------------------------ */
-/* focus handling                                                     */
-/* ------------------------------------------------------------------ */
-
 function hasSelection() {
     return String(window.getSelection?.() || "") !== "";
 }
 
-// Clicking the terminal focuses the input, but only if you aren't selecting text to copy.
 document.addEventListener("pointerup", event => {
     if (isLocked() || hasSelection()) return;
     if (event.target.closest("a, button, .overlay, .fx-overlay, .toast")) return;
@@ -431,7 +426,6 @@ input.addEventListener("blur", () => {
     });
 });
 
-// chips must never steal focus from the input
 output.addEventListener("pointerdown", event => {
     if (event.target.closest("[data-cmd]")) event.preventDefault();
 });
@@ -445,10 +439,8 @@ output.addEventListener("click", event => {
     if (!isLocked()) input.focus({ preventScroll: true });
 });
 
-// hidden: the red dot does what a red dot should do
 document.querySelector("#terminal-header .red")?.addEventListener("click", () => runTyped("exit"));
 
-// the classic cheat code, typed anywhere on the page
 const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
 let konamiAt = 0;
 
