@@ -1,5 +1,24 @@
+/*
+ * All terminal commands live here.
+ *
+ *   description  shown in `help` (leave empty for hidden commands)
+ *   aliases      other names that run the same command
+ *   hidden       keep out of `help`
+ *   secret       counts towards the "secrets discovered" tracker
+ *   output       plain lines (strings) or { text, href } links
+ *   render(api)  returns a DOM node for rich output (cards etc.)
+ *   effect       name of an animation in secrets.js that plays alongside the output
+ *   action       handled by terminal.js (opens windows, toggles sound...)
+ *
+ * To add a social link or change the about card, edit SOCIALS / ABOUT right below.
+ */
+
 import { getFound } from "./secrets.js";
 import { h } from "./dom.js";
+
+/* ------------------------------------------------------------------ */
+/* Edit these two to change the about + socials commands.             */
+/* ------------------------------------------------------------------ */
 
 const ABOUT = {
     name: "Fuz",
@@ -12,7 +31,7 @@ const ABOUT = {
         ["Hangout", "My Discord server (see socials)"],
         ["This site", "A terminal you're standing inside ✦"]
     ],
-    tags: ["Developer", "Furry", "Bisexual"]
+    tags: ["developer", "tinkerer", "night owl"]
 };
 
 const SOCIALS = [
@@ -59,6 +78,9 @@ function miniConstellation() {
         })));
 }
 
+/* ------------------------------------------------------------------ */
+/* commands                                                           */
+/* ------------------------------------------------------------------ */
 
 const commands = {
 
@@ -116,6 +138,8 @@ const commands = {
         description: "Toggle sound effects",
         action: "sound"
     },
+
+    /* ---------------- secrets ---------------- */
 
     hostname: {
         secret: true,
@@ -212,11 +236,31 @@ const commands = {
         effect: "wish"
     },
 
+    explode: {
+        secret: true,
+        hidden: true,
+        aliases: ["boom", "kaboom", "self destruct"],
+        output: ["Arming self-destruct sequence...", "Please stand back."],
+        effect: "explode"
+    },
+
+    freerobux: {
+        secret: true,
+        hidden: true,
+        aliases: ["robux", "free robux"],
+        output: ["Contacting totally-legit Robux servers...", "Generating +99,999,999,999 Robux..."],
+        effect: "robux"
+    },
+
     secrets: {
         hidden: true,
         render: () => secretsList()
     }
 };
+
+/* ------------------------------------------------------------------ */
+/* rich renderers                                                     */
+/* ------------------------------------------------------------------ */
 
 export function cmdChip(name, label = name) {
     return h("button", { class: "cmd-chip", type: "button", "data-cmd": name }, label);
@@ -268,11 +312,11 @@ function neofetch() {
     const uptime = h("dd", {}, formatUptime(performance.now() - bootTime));
 
     const rows = [
-        ["OS", "FuzOS (GitHub Pages Edition)"],
+        ["OS", "FuzOS (GitHub Pages edition)"],
         ["Host", "GitHub"],
-        ["Kernel", "JavaScript (ES Modules)"],
+        ["Kernel", "JavaScript (ES modules)"],
         ["Uptime", uptime],
-        ["Shell", "fuzsh 2.0"],
+        ["Shell", "fuzsh 1.0"],
         ["Display", `${window.innerWidth}x${window.innerHeight} @${Math.min(window.devicePixelRatio || 1, 2)}x`],
         ["Sky", sky ? `${sky.stars} stars · ${sky.constellations} constellations` : "clear skies"],
         ["Theme", "Midnight ✦"]

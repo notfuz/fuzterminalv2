@@ -1,3 +1,16 @@
+/*
+ * Constellations that float where the old cubes used to be.
+ *
+ * Each one is a hand-placed set of real stars joined by lines. They:
+ *   - draw themselves in when the page loads
+ *   - drift and sway slowly, with parallax against the mouse
+ *   - send a little pulse of light along their lines now and then
+ *   - brighten and reveal their name + brightest star when you hover near them
+ *
+ * Coordinates are on a rough 0-100 grid (x right, y down). `m` is apparent magnitude-ish
+ * brightness (bigger = brighter), `t` is a tint index from stars.js (4/5 = warm/red giants).
+ */
+
 import { glowSprite, rand } from "./stars.js";
 
 const TAU = Math.PI * 2;
@@ -113,7 +126,7 @@ class Constellation {
         this.seed = Math.random() * 100;
         this.hover = 0;
         this.visible = true;
-        this.introAt = 400 + index * 450;
+        this.introAt = 400 + index * 450; // ms after load when it starts drawing in
         this.pulse = null;
         this.nextPulse = rand(2500, 6500);
 
@@ -124,6 +137,11 @@ class Constellation {
         this.layout = { ox: 0, oy: 0, s: 1, w: 0, h: 0 };
     }
 
+    /**
+     * Finds a spot that doesn't overlap the terminal or constellations placed before it.
+     * Tries the preferred anchor first, then slides beside/above/below the terminal,
+     * then shrinks and tries again. Returns the placed box (or null if hidden).
+     */
     place(w, h, avoids) {
         const base = Math.max(110, Math.min(300, Math.min(w, h) * 0.3));
         let size = base * this.def.scale;
@@ -218,6 +236,7 @@ class Constellation {
         const intro = animate ? clamp01(elapsed / 2600) : 1;
         const drawn = ease(intro);
 
+        // hover = mouse inside (padded) bounds
         const { w, h } = this.layout;
         const near = Math.abs(mouse.x - this.center.x) < w / 2 + 36 && Math.abs(mouse.y - this.center.y) < h / 2 + 36;
         this.hover += ((near && mouse.active ? 1 : 0) - this.hover) * 0.08;
@@ -226,6 +245,7 @@ class Constellation {
         const index = this.index;
         const lineAlpha = 0.2 + this.hover * 0.45;
 
+        // ---- lines (draw in progressively) ----
         const total = this.edges.length;
         ctx.lineCap = "round";
 
@@ -249,6 +269,7 @@ class Constellation {
         if (this.hover > 0.02) stroke(3.2, 0.06 + this.hover * 0.1);
         stroke(1, lineAlpha);
 
+        // ---- travelling pulse ----
         if (this.pulse && animate) {
             const [a, b] = this.edges[this.pulse.edge];
             const pa = pts[index.get(a.id)];
@@ -263,6 +284,7 @@ class Constellation {
             ctx.globalAlpha = 1;
         }
 
+        // ---- stars ----
         this.def.stars.forEach((star, i) => {
             const p = pts[i];
             const reveal = clamp01(drawn * (this.def.stars.length + 2) - i * 0.9);
@@ -284,6 +306,7 @@ class Constellation {
 
         ctx.globalAlpha = 1;
 
+        // ---- labels ----
         const labelAlpha = (0.2 + this.hover * 0.7) * drawn;
         if (labelAlpha > 0.02) {
             const lowest = pts.reduce((m, p) => Math.max(m, p.y), -Infinity);

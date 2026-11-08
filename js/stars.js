@@ -1,7 +1,17 @@
+/*
+ * Starfield: three depth layers with realistic size distribution (lots of tiny stars,
+ * a few big glowing ones), colour temperatures, per-star twinkle, slow sky rotation,
+ * a pre-rendered nebula + Milky Way band, and shooting stars.
+ *
+ * Everything expensive (nebula, glow sprites) is rendered ONCE to offscreen canvases,
+ * so a frame is just a handful of drawImage/fillRect calls.
+ */
+
 const TAU = Math.PI * 2;
 export const rand = (a, b) => a + Math.random() * (b - a);
 const pick = list => list[Math.floor(Math.random() * list.length)];
 
+/* r,g,b colour temperatures (hot blue -> white -> warm -> orange) */
 export const TINTS = [
     [190, 210, 255],
     [214, 228, 255],
@@ -24,8 +34,11 @@ function pickTint() {
 
 const rgb = ([r, g, b], a = 1) => `rgba(${r},${g},${b},${a})`;
 
+/* ---------- sprites ---------- */
+
 const spriteCache = new Map();
 
+/** Soft round glow in a given tint. */
 export function glowSprite(tint, size = 64) {
     const key = `g${tint}-${size}`;
     if (spriteCache.has(key)) return spriteCache.get(key);
@@ -50,6 +63,7 @@ export function glowSprite(tint, size = 64) {
     return c;
 }
 
+/** Four-point diffraction spike used for the brightest stars. */
 function spikeSprite(tint, size = 128) {
     const key = `s${tint}-${size}`;
     if (spriteCache.has(key)) return spriteCache.get(key);
@@ -78,7 +92,10 @@ function spikeSprite(tint, size = 128) {
     return c;
 }
 
+/* ---------- background (nebula + milky way) ---------- */
+
 function gaussian() {
+    // Box-Muller, roughly N(0,1)
     return Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(TAU * Math.random());
 }
 
@@ -89,6 +106,7 @@ function renderBackground(w, h, dpr) {
     const g = c.getContext("2d");
     g.scale(dpr, dpr);
 
+    // deep space gradient
     const base = g.createLinearGradient(0, 0, 0, h);
     base.addColorStop(0, "#03040b");
     base.addColorStop(0.55, "#060917");
@@ -98,6 +116,7 @@ function renderBackground(w, h, dpr) {
 
     const diag = Math.hypot(w, h);
 
+    // soft nebula clouds
     g.globalCompositeOperation = "lighter";
     const clouds = [
         { x: 0.18, y: 0.28, r: 0.42, col: [96, 70, 190], a: 0.13 },
@@ -118,6 +137,7 @@ function renderBackground(w, h, dpr) {
         g.fillRect(0, 0, w, h);
     }
 
+    // milky way: a tilted band of fine dust
     const angle = -0.52;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
@@ -156,6 +176,8 @@ function renderBackground(w, h, dpr) {
     return c;
 }
 
+/* ---------- stars ---------- */
+
 const LAYERS = [
     // share = fraction of all stars, size range (css px), parallax depth, twinkle depth
     { share: 0.62, min: 0.35, max: 0.95, depth: 0.15, twinkle: 0.35, sky: 0.7, glow: false },
@@ -174,7 +196,7 @@ export class Starfield {
         this.meteors = [];
         this.queue = [];
         this.skyAngle = 0;
-        this.nextMeteor = 1.2;
+        this.nextMeteor = 1.2; // seconds until the first shooting star
         this.count = 0;
         this.motion = true;
     }
@@ -190,6 +212,7 @@ export class Starfield {
     populate() {
         const { width: w, height: h } = this;
 
+        // the sky slowly rotates, so stars must cover the whole circle around the centre
         this.radius = Math.hypot(w, h) / 2 + 40;
         const discArea = Math.PI * this.radius * this.radius;
         const total = Math.min(1400, Math.round(discArea / 6500));
@@ -201,6 +224,7 @@ export class Starfield {
             for (let i = 0; i < n; i++) {
                 const a = Math.random() * TAU;
                 const r = Math.sqrt(Math.random()) * this.radius;
+                // power-law: most stars near `min`, a few near `max`
                 const size = def.min + (def.max - def.min) * Math.pow(Math.random(), 2.6);
                 const tint = pickTint();
 
@@ -215,6 +239,7 @@ export class Starfield {
                 });
             }
 
+            // the very brightest few in the near layer get diffraction spikes
             let spikes = [];
             if (def.glow) {
                 const all = buckets.flat().sort((a, b) => b.size - a.size);
@@ -227,6 +252,8 @@ export class Starfield {
 
         this.count = this.layers.reduce((sum, l) => sum + l.buckets.reduce((s, b) => s + b.length, 0), 0);
     }
+
+    /* ----- shooting stars ----- */
 
     shoot(options = {}) {
         const { width: w, height: h } = this;
@@ -253,6 +280,7 @@ export class Starfield {
         });
     }
 
+    /** A burst of parallel meteors, like a real shower with a single radiant. */
     shower(count = 18, duration = 6) {
         const angle = rand(0.4, 0.7);
         const direction = Math.random() < 0.5 ? 1 : -1;
@@ -270,6 +298,8 @@ export class Starfield {
             });
         }
     }
+
+    /* ----- frame ----- */
 
     update(dt) {
         if (this.motion) this.skyAngle += dt * 0.0008;
@@ -394,6 +424,7 @@ export class Starfield {
             ctx.lineTo(tx, ty);
             ctx.stroke();
 
+            // thin bright core
             ctx.lineWidth = Math.max(0.6, m.width * 0.4);
             ctx.strokeStyle = `rgba(255,255,255,${0.9 * alpha})`;
             ctx.beginPath();
@@ -405,6 +436,7 @@ export class Starfield {
             ctx.globalAlpha = alpha;
             ctx.drawImage(glowSprite(m.tint), m.x - glow, m.y - glow, glow * 2, glow * 2);
 
+            // fireballs shed a few embers
             if (m.fireball) {
                 for (let i = 1; i <= 4; i++) {
                     const back = i * trail * 0.2;

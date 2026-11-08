@@ -1,3 +1,9 @@
+/*
+ * Procedural sound effects (Web Audio). No audio files to download, nothing to host.
+ * Sounds only ever play in response to the visitor typing a command, and can be muted
+ * with the `sound` command (remembered in localStorage).
+ */
+
 let ctx = null;
 let master = null;
 let noiseBuffer = null;
@@ -42,6 +48,7 @@ function ensure() {
         master.connect(compressor);
         compressor.connect(ctx.destination);
 
+        // one shared second of white noise
         noiseBuffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
         const data = noiseBuffer.getChannelData(0);
         for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -111,6 +118,7 @@ function noise({ dur = 0.2, vol = 0.2, at = 0, type = "bandpass", from = 1000, t
     source.stop(t + dur + 0.05);
 }
 
+/** Long low hum with a slow wobble (matrix, deep thought). */
 function drone({ freq = 55, dur = 4, vol = 0.18, at = 0 } = {}) {
     const c = ensure();
     if (!c) return;
@@ -209,6 +217,7 @@ const SOUNDS = {
     },
 
     coffee() {
+        // sad trombone
         [[293, 277], [277, 262], [262, 247], [247, 175]].forEach(([from, to], i) => {
             tone(from, { type: "sawtooth", to, dur: i === 3 ? 1 : 0.38, vol: 0.12, at: i * 0.4, filter: 700 });
         });
@@ -244,6 +253,22 @@ const SOUNDS = {
     stamp() {
         tone(90, { to: 40, dur: 0.25, vol: 0.35, type: "sine" });
         noise({ dur: 0.1, vol: 0.2, type: "lowpass", from: 800 });
+    },
+
+    coin() {
+        tone(988, { type: "square", dur: 0.07, vol: 0.05, filter: 4200 });
+        tone(1319, { type: "square", dur: 0.22, vol: 0.05, at: 0.07, filter: 4200 });
+    },
+
+    rumble() {
+        noise({ dur: 1.5, vol: 0.28, type: "lowpass", from: 90, to: 260, q: 0.7 });
+        tone(48, { to: 70, dur: 1.5, vol: 0.2, type: "sawtooth", filter: 200 });
+    },
+
+    boom() {
+        noise({ dur: 1.1, vol: 0.55, type: "lowpass", from: 1400, to: 60, q: 0.6 });
+        noise({ dur: 0.18, vol: 0.4, type: "highpass", from: 2200 });
+        tone(130, { to: 28, dur: 0.9, vol: 0.5, type: "sine" });
     },
 
     blip() {

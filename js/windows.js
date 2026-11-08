@@ -1,3 +1,13 @@
+/*
+ * Tiny window manager.
+ *
+ * Anything that "pops up" (gallery, profile, lightbox, secret popups...) registers
+ * itself here. That gives us ONE source of truth for:
+ *   - locking the terminal input while a window is open
+ *   - pausing the animated sky when a window covers it (performance)
+ *   - closing the top-most window with Escape
+ */
+
 const stack = [];
 
 function emit() {
@@ -15,9 +25,9 @@ function emit() {
 }
 
 /**
- * @param {string} id
- * @param {Function} close
- * 
+ * @param {string} id            unique id
+ * @param {Function} close       called when something (Esc, red dot) asks this window to close.
+ *                               It must tear the window down and call unregisterWindow(id).
  * @param {{lock?:boolean, pauseSky?:boolean}} opts
  */
 export function registerWindow(id, close, { lock = true, pauseSky = false } = {}) {
@@ -48,13 +58,15 @@ document.addEventListener("keydown", event => {
     closeTopWindow();
 });
 
+/* ---------- overlay helpers (fade in / out without display juggling) ---------- */
+
 const hideTimers = new WeakMap();
 
 export function showOverlay(el) {
     clearTimeout(hideTimers.get(el));
     el.hidden = false;
     el.setAttribute("aria-hidden", "false");
-    void el.offsetWidth;
+    void el.offsetWidth; // restart the transition
     el.classList.add("open");
 }
 
@@ -65,6 +77,9 @@ export function hideOverlay(el, ms = 220) {
     hideTimers.set(el, setTimeout(() => { el.hidden = true; }, ms));
 }
 
+/* ---------- decorations ---------- */
+
+/** Adds the animated outline-shine ring to an element. */
 export function shineify(el, { delay = Math.random() * 6, duration = 9 + Math.random() * 5 } = {}) {
     if (el.querySelector(":scope > .ring")) return el;
 

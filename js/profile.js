@@ -1,11 +1,17 @@
 import { registerWindow, unregisterWindow, showOverlay, hideOverlay } from "./windows.js";
 import { h } from "./dom.js";
 
+/* ------------------------------------------------------------------ */
+/* settings                                                           */
+/* ------------------------------------------------------------------ */
+
 const USER_ID = "1187401892435869737";
 const API = `https://api.lanyard.rest/v1/users/${USER_ID}`;
 const POLL_MS = 10000;
 const FETCH_TIMEOUT_MS = 8000;
 
+// Discord does not expose bios through Lanyard, so edit your "About Me" here.
+// Leave it empty ("") to hide the section.
 const BIO = "Hey! I'm Fuz.";
 
 const STATUS = {
@@ -16,6 +22,7 @@ const STATUS = {
     streaming: { name: "Streaming", colour: "#9b6bff" }
 };
 
+/* Discord public flags. `fallback` is shown if there is no image in assets/badges/. */
 const BADGES = [
     { flag: 1 << 0, image: "staff", title: "Discord Staff", fallback: "🛡️" },
     { flag: 1 << 1, image: "partner", title: "Partnered Server Owner", fallback: "🤝" },
@@ -32,6 +39,10 @@ const BADGES = [
 ];
 
 const ACTIVITY_LABELS = { 0: "Playing", 1: "Streaming", 2: "Listening to", 3: "Watching", 5: "Competing in" };
+
+/* ------------------------------------------------------------------ */
+/* elements                                                           */
+/* ------------------------------------------------------------------ */
 
 const $ = id => document.getElementById(id);
 
@@ -57,18 +68,27 @@ const discordId = $("profile-id");
 const copyButton = $("copy-id");
 const badges = $("profile-badges");
 
+/* ------------------------------------------------------------------ */
+/* state                                                              */
+/* ------------------------------------------------------------------ */
+
 let pollTimer = null;
 let tickTimer = null;
 let controller = null;
 let lastSignature = "";
 let lastPayload = null;
-let timed = [];
+let timed = []; // elements that need a live clock
+
+/* ------------------------------------------------------------------ */
+/* open / close                                                       */
+/* ------------------------------------------------------------------ */
 
 export function openProfile() {
     registerWindow("profile", closeProfile, { pauseSky: true });
     showOverlay(overlay);
 
     if (lastPayload) {
+        // instant reopen with the last known data, refresh quietly behind it
         card.hidden = false;
         loading.hidden = true;
         startTick();
@@ -119,6 +139,10 @@ function stopTick() {
     tickTimer = null;
 }
 
+/* ------------------------------------------------------------------ */
+/* fetching                                                           */
+/* ------------------------------------------------------------------ */
+
 async function refresh() {
     controller?.abort();
     controller = new AbortController();
@@ -131,6 +155,7 @@ async function refresh() {
         const json = await response.json();
         if (!json.success || !json.data) throw new Error("Lanyard returned no data");
 
+        // closed while we were waiting
         if (overlay.hidden) return;
 
         const signature = JSON.stringify(json.data);
@@ -156,10 +181,15 @@ async function refresh() {
     }
 }
 
+/* ------------------------------------------------------------------ */
+/* rendering                                                          */
+/* ------------------------------------------------------------------ */
+
 function render(data) {
     const user = data.discord_user || {};
     const all = Array.isArray(data.activities) ? data.activities : [];
 
+    // type 4 is the custom status (the emoji + text under your name). It is NOT an activity.
     const custom = all.find(a => a.type === 4) || null;
     const isStreaming = all.some(a => a.type === 1);
     const state = isStreaming ? "streaming" : (data.discord_status in STATUS ? data.discord_status : "offline");
@@ -305,6 +335,8 @@ function renderBadges(user) {
     }));
 }
 
+/* ----- activities ----- */
+
 const isSpotifyActivity = a => a.id === "spotify:1" || (a.type === 2 && a.name === "Spotify");
 
 function renderActivities(data, all) {
@@ -409,6 +441,7 @@ function progressBar(start, end, colour) {
     return box;
 }
 
+/** Updates every running clock in place. No re-rendering, no flicker. */
 function updateClocks() {
     const now = Date.now();
 
@@ -440,11 +473,14 @@ function formatDuration(ms) {
     return hours ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
 }
 
+/* ----- images ----- */
+
 function resolveImage(a, image) {
     if (!image) return null;
 
     if (image.startsWith("spotify:")) return `https://i.scdn.co/image/${image.slice(8)}`;
 
+    // mp:external/<hash>/https/example.com/pic.png  ->  Discord's media proxy
     if (image.startsWith("mp:external/")) return `https://media.discordapp.net/external/${image.slice(12)}`;
     if (image.startsWith("mp:")) return `https://media.discordapp.net/${image.slice(3)}`;
 
@@ -455,6 +491,10 @@ function resolveImage(a, image) {
 
     return null;
 }
+
+/* ------------------------------------------------------------------ */
+/* misc                                                               */
+/* ------------------------------------------------------------------ */
 
 copyButton.addEventListener("click", async () => {
     const original = "Copy";
