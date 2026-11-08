@@ -271,6 +271,22 @@ const SOUNDS = {
         tone(130, { to: 28, dur: 0.9, vol: 0.5, type: "sine" });
     },
 
+    horn() {
+        tone(311, { type: "sawtooth", dur: 0.55, vol: 0.14, filter: 900 });
+        tone(392, { type: "sawtooth", dur: 0.55, vol: 0.12, filter: 900 });
+        tone(311, { type: "sawtooth", dur: 0.7, vol: 0.14, at: 0.65, filter: 900 });
+        tone(392, { type: "sawtooth", dur: 0.7, vol: 0.12, at: 0.65, filter: 900 });
+    },
+
+    sonar() {
+        tone(1046, { dur: 0.9, vol: 0.12 });
+        tone(1046, { dur: 0.6, vol: 0.04, at: 0.18 });
+    },
+
+    levelup() {
+        [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, { type: "square", dur: 0.12, vol: 0.07, at: i * 0.075, filter: 3500 }));
+    },
+
     blip() {
         tone(1200, { type: "square", dur: 0.04, vol: 0.04, filter: 3000 });
     }

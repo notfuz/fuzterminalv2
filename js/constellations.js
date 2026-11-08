@@ -189,6 +189,22 @@ class Constellation {
             size *= 0.88;
         }
 
+        // Narrow or zoomed-in windows: there's no free space beside the terminal.
+        // Still show the constellation (peeking out around the terminal) instead of hiding it.
+        const others = avoids.slice(1);
+        const fallback = Math.max(90, Math.min(base * this.def.scale, 190));
+        const fw = (bounds.w / unit) * fallback;
+        const fh = (bounds.h / unit) * fallback;
+        const fxp = Math.max(margin, Math.min(w - margin - fw, fx * w));
+        const fyp = Math.max(margin, Math.min(h - margin - fh - 20, fy * h));
+        const fbox = { left: fxp - 14, right: fxp + fw + 14, top: fyp - 14, bottom: fyp + fh + 30 };
+
+        if (!others.some(a => !(fbox.right < a.left || fbox.left > a.right || fbox.bottom < a.top || fbox.top > a.bottom))) {
+            this.layout = { ox: fxp, oy: fyp, s: fallback / unit, w: fw, h: fh };
+            this.visible = true;
+            return fbox;
+        }
+
         this.visible = false;
         return null;
     }

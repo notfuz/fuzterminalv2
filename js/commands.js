@@ -252,6 +252,83 @@ const commands = {
         effect: "robux"
     },
 
+    sl: {
+        secret: true,
+        hidden: true,
+        output: ["sl: a train has arrived.", "(you probably meant ls)"],
+        effect: "sl"
+    },
+
+    vim: {
+        secret: true,
+        hidden: true,
+        aliases: ["vi", "nano", "emacs"],
+        output: ["Opening vim...", "Good luck getting out."],
+        effect: "vim"
+    },
+
+    rickroll: {
+        secret: true,
+        hidden: true,
+        aliases: ["rick", "giftcard", "gift"],
+        output: ["Congratulations!", "You have been selected."],
+        effect: "rickroll"
+    },
+
+    blackhole: {
+        secret: true,
+        hidden: true,
+        aliases: ["black hole", "singularity"],
+        output: ["Warning: gravitational anomaly detected.", "Hold on to something."],
+        effect: "blackhole"
+    },
+
+    ping: {
+        secret: true,
+        hidden: true,
+        output: [
+            "PING fuz.terminal (127.0.0.1): 56 data bytes",
+            "64 bytes from 127.0.0.1: icmp_seq=0 ttl=64 time=0.042 ms",
+            "64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.039 ms",
+            "64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=9999 ms",
+            "--- fuz.terminal ping statistics ---",
+            "3 packets transmitted, 3 received, 0% packet loss",
+            "(the third one went through a black hole)"
+        ],
+        effect: "ping"
+    },
+
+    konami: {
+        secret: true,
+        hidden: true,
+        aliases: ["up up down down left right left right b a", "uuddlrlrba"],
+        output: ["Cheat code accepted.", "+30 lives."],
+        effect: "konami"
+    },
+
+    gravity: {
+        secret: true,
+        hidden: true,
+        output: ["Gravity enabled.", "Everything not bolted down is falling."],
+        effect: "gravity"
+    },
+
+    bsod: {
+        secret: true,
+        hidden: true,
+        aliases: ["bluescreen", "blue screen", "crash"],
+        output: ["Fatal error.", "Collecting error info..."],
+        effect: "bsod"
+    },
+
+    cat: {
+        secret: true,
+        hidden: true,
+        aliases: ["meow", "kitty", "kitten"],
+        output: ["Meow."],
+        effect: "cat"
+    },
+
     secrets: {
         hidden: true,
         render: () => secretsList()

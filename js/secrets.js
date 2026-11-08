@@ -297,7 +297,7 @@ const EFFECTS = {
             <div class="coffee-ui window">
                 <div class="cup-wrap">
                     <div class="steam"><i></i><i></i><i></i></div>
-                    <div class="cup"><div class="cup-level"></div><div class="cup-handle"></div></div>
+                    <div class="cup"><div class="cup-fill"><div class="cup-level"></div></div><div class="cup-handle"></div></div>
                     <div class="saucer"></div>
                 </div>
                 <div class="coffee-status"><span class="coffee-pct">Brewing... 12%</span></div>
@@ -605,6 +605,7 @@ const EFFECTS = {
         const fx = layer("explode", "fx-explode", `<div class="shockwave"></div><div class="blast-flash"></div><div class="shards"></div>`, {
             ambient: true,
             closeOnClick: false,
+            pauseSky: true,
             onClose: () => {
                 cancelAnimationFrame(raf);
                 term.style.visibility = "";
@@ -638,24 +639,51 @@ const EFFECTS = {
                 y: j * ch + (j > 0 && j < rows ? rand(-0.34, 0.34) * ch : 0)
             })));
 
-            const scroll = term.querySelector("#terminal-body")?.scrollTop || 0;
+            // One light template: lines scrolled out of view are emptied (same height), so a long
+            // scrollback no longer means 20 copies of hundreds of nodes.
+            const bodyEl = term.querySelector("#terminal-body");
+            const tpl = term.cloneNode(true);
+            tpl.classList.remove("rumbling", "locked");
+            tpl.classList.add("shard-clone");
+            tpl.setAttribute("inert", "");
+            tpl.querySelectorAll(".ring").forEach(n => n.remove());
+
+            const view = bodyEl.getBoundingClientRect();
+            const origKids = [...term.querySelectorAll("#output > *, #terminal-body > .banner, #terminal-body > .line")];
+            const cloneKids = [...tpl.querySelectorAll("#output > *, #terminal-body > .banner, #terminal-body > .line")];
+            origKids.forEach((node, i) => {
+                const r = node.getBoundingClientRect();
+                if (r.bottom < view.top - 8 || r.top > view.bottom + 8) {
+                    const c = cloneKids[i];
+                    c.replaceChildren();
+                    c.style.boxSizing = "border-box";
+                    c.style.height = `${r.height}px`;
+                    c.style.padding = "0";
+                    c.style.border = "0";
+                }
+            });
+
+            const scroll = bodyEl.scrollTop;
             const blast = { x: rect.width / 2 + rand(-90, 90), y: rect.height / 2 + rand(-50, 50) };
             const shards = [];
 
             for (let i = 0; i < cols; i++) {
                 for (let j = 0; j < rows; j++) {
                     const poly = [grid[i][j], grid[i + 1][j], grid[i + 1][j + 1], grid[i][j + 1]];
+                    const xs = poly.map(p => p.x);
+                    const ys = poly.map(p => p.y);
+                    const minX = Math.min(...xs), maxX = Math.max(...xs);
+                    const minY = Math.min(...ys), maxY = Math.max(...ys);
                     const cx = poly.reduce((sum, p) => sum + p.x, 0) / 4;
                     const cy = poly.reduce((sum, p) => sum + p.y, 0) / 4;
 
                     const wrap = h("div", { class: "shard" });
-                    wrap.style.cssText = `left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;` +
-                        `transform-origin:${cx}px ${cy}px;clip-path:polygon(${poly.map(p => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(",")})`;
+                    wrap.style.cssText = `left:${rect.left + minX}px;top:${rect.top + minY}px;width:${maxX - minX}px;height:${maxY - minY}px;` +
+                        `transform-origin:${cx - minX}px ${cy - minY}px;` +
+                        `clip-path:polygon(${poly.map(p => `${(p.x - minX).toFixed(1)}px ${(p.y - minY).toFixed(1)}px`).join(",")})`;
 
-                    const clone = term.cloneNode(true);
-                    clone.classList.remove("rumbling", "locked");
-                    clone.classList.add("shard-clone");
-                    clone.setAttribute("inert", "");
+                    const clone = tpl.cloneNode(true);
+                    clone.style.cssText = `left:${-minX}px !important;top:${-minY}px !important;width:${rect.width}px !important;height:${rect.height}px !important;`;
                     wrap.append(clone);
                     shardHost.append(wrap);
 
@@ -684,7 +712,7 @@ const EFFECTS = {
 
             play("boom");
             confetti({
-                count: 170,
+                count: 70,
                 origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
                 duration: 2600,
                 colors: ["#ffb347", "#ff7a1a", "#ff4d2e", "#ffe08a", "#ffffff"]
@@ -707,7 +735,7 @@ const EFFECTS = {
                     s.el.style.opacity = t > 1.4 ? Math.max(0, 1 - (t - 1.4) / 0.9).toFixed(2) : 1;
                 }
 
-                if (t < 2.4 && !fx.closed) raf = requestAnimationFrame(step);
+                if (t < 2.3 && !fx.closed) raf = requestAnimationFrame(step);
             };
 
             raf = requestAnimationFrame(step);
@@ -736,7 +764,7 @@ const EFFECTS = {
                     <div class="title">robux-generator.exe</div>
                 </div>
                 <div class="robux-body">
-                    <div class="robux-coin">R$</div>
+                    <div class="robux-coin"><div class="coin-glow"></div><div class="coin-spin">${Array.from({ length: 9 }, (_, i) => `<i class="coin-edge" style="--z:${i - 4}px"></i>`).join("")}<b class="coin-face coin-front">R$</b><b class="coin-face coin-back">R$</b></div></div>
                     <div class="robux-label">BALANCE</div>
                     <div class="robux-amount">0</div>
                     <div class="robux-gain">+99,999,999,999</div>
@@ -779,6 +807,466 @@ const EFFECTS = {
         }, 2900);
 
         fx.later(() => fx.el.classList.add("joke"), 6200);
+    },
+
+    /* ---------- sl (the train) ---------- */
+    sl() {
+        if (reducedMotion) {
+            toast({ icon: "🚂", title: "Choo choo", text: "The train skipped your screen (reduced motion).", duration: 3000 });
+            return;
+        }
+
+        const art = [
+            "      ~  ~",
+            "     (    )",
+            "   _[======]__      ______      ______      ______",
+            "  |  CHOO!   |_____|  []  |____|  []  |____|  []  |",
+            "  |__________|=====|______|====|______|====|______|",
+            "    (o)  (o)  (o)    (o)(o)      (o)(o)      (o)(o)"
+        ].join("\n");
+
+        const fx = layer("sl", "fx-sl", `<pre class="sl-train">${art}</pre>`, { ambient: true, lock: false, duration: 6200 });
+        play("horn");
+        [300, 480, 660, 840, 1020, 1200, 1380, 1560, 1740, 1920, 2100, 2280, 2460, 2640, 2820, 3000, 3180, 3360, 3540, 3720].forEach(ms => fx.later(() => play("step"), ms));
+    },
+
+    /* ---------- vim (the trap) ---------- */
+    vim() {
+        const text = ["Dear diary,", "today I opened vim.", "I have been here for a while."];
+        let mode = "normal";
+        let cmd = "";
+        let msg = "";
+        let off = () => {};
+
+        const fx = layer("vim", "fx-vim", `
+            <div class="vim-ui window">
+                <div class="window-header">
+                    <div class="traffic"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+                    <div class="title">vim - notes.txt</div>
+                </div>
+                <pre class="vim-screen"></pre>
+                <div class="vim-status"><span class="vim-mode"></span><span class="vim-msg"></span></div>
+            </div>`, { closeOnClick: false, onClose: () => off() });
+
+        const screen = fx.el.querySelector(".vim-screen");
+        const modeEl = fx.el.querySelector(".vim-mode");
+        const msgEl = fx.el.querySelector(".vim-msg");
+
+        const render = () => {
+            const rows = text.map((line, i) => line + (i === text.length - 1 ? "█" : ""));
+            while (rows.length < 12) rows.push("~");
+            screen.textContent = rows.join("\n");
+            modeEl.textContent = mode === "command" ? `:${cmd}█` : mode === "insert" ? "-- INSERT --" : "";
+            msgEl.textContent = msg;
+        };
+
+        const run = () => {
+            const c = cmd.trim();
+            mode = "normal";
+            cmd = "";
+            if (c === "q!" || c === "qa!") {
+                fx.close();
+                toast({ icon: "🏃", title: "You escaped", text: "Few ever do.", duration: 3600 });
+                play("achievement");
+                return;
+            }
+            play("error");
+            if (c === "q" || c === "qa") msg = "E37: No write since last change (add ! to override)";
+            else if (c === "wq" || c === "x") msg = "E45: 'readonly' option is set (add ! to override)";
+            else if (c === "w") msg = "E212: Can't open file for writing";
+            else msg = `E492: Not an editor command: ${c}`;
+        };
+
+        const onKey = event => {
+            if (event.ctrlKey || event.metaKey || event.altKey) return;
+            if (event.key === "F12") return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            play("tick");
+            msg = "";
+
+            if (mode === "normal") {
+                if (event.key === "i" || event.key === "a") mode = "insert";
+                else if (event.key === "o") { text.push(""); mode = "insert"; }
+                else if (event.key === ":") { mode = "command"; cmd = ""; }
+            } else if (mode === "insert") {
+                const last = text.length - 1;
+                if (event.key === "Escape") mode = "normal";
+                else if (event.key === "Enter") text.length < 11 && text.push("");
+                else if (event.key === "Backspace") text[last] = text[last].slice(0, -1);
+                else if (event.key.length === 1 && text[last].length < 46) text[last] += event.key;
+            } else {
+                if (event.key === "Escape") { mode = "normal"; cmd = ""; }
+                else if (event.key === "Enter") run();
+                else if (event.key === "Backspace") cmd = cmd.slice(0, -1);
+                else if (event.key.length === 1 && cmd.length < 16) cmd += event.key;
+            }
+            render();
+        };
+
+        window.addEventListener("keydown", onKey, true);
+        off = () => window.removeEventListener("keydown", onKey, true);
+
+        fx.el.querySelector(".traffic .red").addEventListener("click", () => { msg = "Nice try. Use :q!"; play("error"); render(); });
+        shineify(fx.el.querySelector(".vim-ui"), { delay: 0.4, duration: 7 });
+        render();
+
+        fx.later(() => { msg = "hint: the exit is :q!"; render(); }, 9000);
+        fx.later(() => { fx.close(); toast({ icon: "🙏", title: "Rescued", text: "A kind stranger closed vim for you.", duration: 3600 }); }, 40000);
+    },
+
+    /* ---------- rickroll ---------- */
+    rickroll() {
+        const frames = ["\\o/\n |\n/ \\", " o/\n/|\n/ >", "\\o \n |\\\n< \\", " o \n/|\\\n/ \\"];
+
+        const fx = layer("rickroll", "fx-rick", `
+            <div class="rick-ui window">
+                <div class="window-header">
+                    <div class="traffic"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+                    <div class="title">gift-card.exe</div>
+                </div>
+                <div class="rick-body">
+                    <div class="rick-gift">🎁</div>
+                    <div class="rick-title">YOU WON A $500 GIFT CARD!</div>
+                    <div class="rick-sub">Claiming your prize...</div>
+                    <div class="rick-bar"><i></i></div>
+                    <pre class="rick-dance"></pre>
+                    <div class="rick-got">You just got rickrolled.</div>
+                    <div class="rick-small">(no song quoted, I'm not getting sued)</div>
+                </div>
+            </div>`, { duration: 10500 });
+
+        shineify(fx.el.querySelector(".rick-ui"), { delay: 0.3, duration: 5 });
+        const title = fx.el.querySelector(".rick-title");
+        const sub = fx.el.querySelector(".rick-sub");
+        const dance = fx.el.querySelector(".rick-dance");
+
+        fx.later(() => { sub.textContent = "Verifying you are a very lucky person..."; play("blip"); }, 1300);
+        fx.later(() => { sub.textContent = "Almost there..."; play("blip"); }, 2500);
+
+        fx.later(() => {
+            fx.el.classList.add("rolled");
+            title.textContent = "GOTCHA!";
+            sub.textContent = "";
+            play("achievement");
+            let i = 0;
+            dance.textContent = frames[0];
+            fx.every(() => { i += 1; dance.textContent = frames[i % frames.length]; play(i % 2 ? "tick" : "step"); }, 300);
+            confetti({ count: 100, origin: { x: 0.5, y: 0.5 } });
+        }, 3600);
+    },
+
+    /* ---------- blackhole ---------- */
+    blackhole() {
+        const term = terminalEl();
+        if (!term || reducedMotion) {
+            toast({ icon: "🕳️", title: "Singularity", text: "Skipped (reduced motion).", duration: 3000 });
+            return;
+        }
+
+        const w = window.innerWidth;
+        const hh = window.innerHeight;
+        const cx = w / 2;
+        const cy = hh / 2;
+        const canvas = h("canvas", { class: "fx-bh" });
+        canvas.width = w;
+        canvas.height = hh;
+        const ctx = canvas.getContext("2d");
+        let raf = 0;
+
+        const fx = layer("blackhole", "fx-blackhole", canvas, {
+            ambient: true,
+            pauseSky: true,
+            onClose: () => {
+                cancelAnimationFrame(raf);
+                term.classList.remove("sucked", "spat");
+            }
+        });
+
+        const maxD = Math.hypot(cx, cy);
+        const parts = Array.from({ length: 240 }, () => ({
+            a: rand(0, Math.PI * 2), d: rand(90, maxD), s: rand(0.8, 2.2), v: rand(0.8, 1.3),
+            c: pick(["#ffffff", "#bcd0ff", "#ffe2b0", "#e0c8ff"]), px: 0, py: 0, out: false
+        }));
+
+        play("whoosh");
+        fx.later(() => { term.classList.add("sucked"); play("deep"); }, 700);
+        fx.later(() => {
+            term.classList.remove("sucked");
+            term.classList.add("spat");
+            parts.forEach(p => { p.out = true; p.d = rand(30, 80); p.v = rand(500, 1200); });
+            play("boom");
+            confetti({ count: 40, origin: { x: 0.5, y: 0.5 }, colors: ["#ffffff", "#b79cff", "#8ab4ff"], duration: 1800 });
+        }, 3700);
+        fx.later(() => fx.close(), 5000);
+
+        const t0 = performance.now();
+        let last = t0;
+
+        const frame = now => {
+            const dt = Math.min(0.04, (now - last) / 1000);
+            last = now;
+            const t = (now - t0) / 1000;
+            ctx.clearRect(0, 0, w, hh);
+
+            const grow = Math.min(1, t / 0.7);
+            const shrink = t > 3.9 ? Math.max(0, 1 - (t - 3.9) / 0.9) : 1;
+            const r = 64 * grow * shrink;
+
+            for (const p of parts) {
+                p.px = cx + Math.cos(p.a) * p.d;
+                p.py = cy + Math.sin(p.a) * p.d * 0.9;
+
+                if (p.out) {
+                    p.d += p.v * dt;
+                } else {
+                    const pull = t < 0.7 ? 0.1 : 1;
+                    p.a += (1.2 + 260 / p.d) * dt * pull;
+                    p.d -= (16 + 9000 / p.d) * dt * p.v * pull;
+                    if (p.d < r * 0.8) { p.d = rand(maxD * 0.6, maxD); p.a = rand(0, 6.28); if (t > 3) p.d = 9999; }
+                }
+
+                const nx = cx + Math.cos(p.a) * p.d;
+                const ny = cy + Math.sin(p.a) * p.d * 0.9;
+                ctx.strokeStyle = p.c;
+                ctx.globalAlpha = Math.min(1, p.d / 160);
+                ctx.lineWidth = p.s;
+                ctx.beginPath();
+                ctx.moveTo(p.px, p.py);
+                ctx.lineTo(nx, ny);
+                ctx.stroke();
+            }
+
+            ctx.globalAlpha = 1;
+
+            if (r > 1) {
+                const glow = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 3.2);
+                glow.addColorStop(0, "rgba(255,170,70,.55)");
+                glow.addColorStop(0.45, "rgba(150,70,255,.22)");
+                glow.addColorStop(1, "rgba(0,0,0,0)");
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * 3.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(-0.25);
+                ctx.scale(1, 0.22);
+                ctx.strokeStyle = "rgba(255,200,120,.9)";
+                ctx.lineWidth = r * 0.22;
+                ctx.beginPath();
+                ctx.arc(0, 0, r * 1.7, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.fillStyle = "#000";
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            if (!fx.closed) raf = requestAnimationFrame(frame);
+        };
+
+        raf = requestAnimationFrame(frame);
+    },
+
+    /* ---------- ping ---------- */
+    ping() {
+        if (reducedMotion) return;
+        const fx = layer("ping", "fx-ping", `<i></i><i></i><i></i>`, { ambient: true, lock: false, duration: 3600 });
+        play("sonar");
+        fx.later(() => play("sonar"), 900);
+        fx.later(() => play("sonar"), 1800);
+    },
+
+    /* ---------- konami ---------- */
+    konami() {
+        const fx = layer("konami", "fx-konami", `<div class="konami-text">+30 LIVES</div><div class="konami-sub">CHEAT CODE ACTIVATED</div>`, { ambient: true, lock: false, duration: 6500 });
+        play("levelup");
+        window.__sky?.shower(34, 7);
+        confetti({ count: 160, origin: { x: 0.5, y: 0.75 }, colors: ["#ff4d6d", "#ffd23f", "#7ee0b0", "#5ca9ff", "#b79cff"] });
+        fx.later(() => confetti({ count: 120, origin: { x: 0.2, y: 0.8 } }), 700);
+        fx.later(() => confetti({ count: 120, origin: { x: 0.8, y: 0.8 } }), 1100);
+    },
+
+    /* ---------- gravity ---------- */
+    gravity() {
+        const body = document.getElementById("terminal-body");
+        const term = terminalEl();
+        if (!body || !term) return;
+
+        if (reducedMotion) {
+            toast({ icon: "🍎", title: "Gravity", text: "Things would have fallen (reduced motion).", duration: 3000 });
+            return;
+        }
+
+        const view = body.getBoundingClientRect();
+        const selector = ".banner, #output .line, #output .card, #output .social-card, #output .social-list > *, #terminal-body > .line:not(#input-line)";
+        const items = [...body.querySelectorAll(selector)]
+            .filter(el => !el.closest(".social-list") || el.parentElement.classList.contains("social-list"))
+            .map(el => ({ el, r: el.getBoundingClientRect() }))
+            .filter(({ r }) => r.height > 0 && r.bottom > view.top && r.top < view.bottom)
+            .sort((a, b) => b.r.bottom - a.r.bottom);
+
+        const anims = [];
+        let floor = view.bottom - 10;
+
+        const fx = layer("gravity", "fx-gravity", "", {
+            ambient: true,
+            duration: 6200,
+            onClose: () => anims.forEach(a => a.cancel())
+        });
+
+        play("whoosh");
+
+        items.forEach(({ el, r }, i) => {
+            const targetBottom = floor + rand(-3, 3);
+            floor -= Math.max(10, Math.min(r.height * 0.55, 26));
+            const dy = Math.max(0, targetBottom - r.bottom);
+            const dx = rand(-70, 70);
+            const rot = rand(-14, 14);
+            const delay = 300 + i * 38 + rand(0, 120);
+
+            const fall = el.animate([
+                { transform: "none" },
+                { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)` }
+            ], { duration: 650 + dy * 0.6, delay, easing: "cubic-bezier(.5, 0, 1, .55)", fill: "forwards" });
+            anims.push(fall);
+
+            fall.finished.then(() => {
+                if (fx.closed) return;
+                const bounce = el.animate([
+                    { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)` },
+                    { transform: `translate(${dx}px, ${dy - 14}px) rotate(${rot * 0.6}deg)`, offset: 0.4 },
+                    { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)` }
+                ], { duration: 280, easing: "ease-out", fill: "forwards" });
+                anims.push(bounce);
+                if (i % 3 === 0) play("stamp");
+            }).catch(() => {});
+        });
+
+        // gravity switches off: everything floats back
+        fx.later(() => {
+            play("poweron");
+            anims.splice(0).forEach(a => a.cancel());
+            items.forEach(({ el }, i) => {
+                const rise = el.animate([{ transform: "translateY(30px)", opacity: 0.3 }, { transform: "none", opacity: 1 }],
+                    { duration: 600, delay: i * 25, easing: "cubic-bezier(.2, .9, .2, 1)", fill: "backwards" });
+                anims.push(rise);
+            });
+        }, 4800);
+    },
+
+    /* ---------- bsod ---------- */
+    bsod() {
+        const term = terminalEl();
+        const fx = layer("bsod", "fx-bsod", `
+            <div class="bsod-ui">
+                <div class="bsod-face">:(</div>
+                <div class="bsod-text">Your terminal ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</div>
+                <div class="bsod-pct"><span>0</span>% complete</div>
+                <div class="bsod-foot">
+                    <div class="bsod-qr" aria-hidden="true"></div>
+                    <div class="bsod-small">If you call a support person, give them this info:<br>Stop code: SKILL_ISSUE_EXCEPTION<br>What failed: fuz.sys</div>
+                </div>
+            </div>
+            <div class="bsod-restart">Restarting...</div>`, {
+            closeOnClick: false,
+            onClose: () => { if (term) term.style.visibility = ""; }
+        });
+
+        if (term) term.style.visibility = "hidden";
+        play("glitch");
+        fx.later(() => play("poweroff"), 150);
+
+        const pct = fx.el.querySelector(".bsod-pct span");
+        let value = 0;
+        fx.later(() => {
+            fx.every(() => {
+                value = Math.min(100, value + Math.ceil(rand(1, 7)));
+                pct.textContent = value;
+            }, 170);
+        }, 900);
+
+        fx.later(() => { fx.el.classList.add("restarting"); play("poweroff"); }, 5200);
+        fx.later(() => {
+            if (term) { term.style.visibility = ""; term.classList.add("rebuild"); setTimeout(() => term.classList.remove("rebuild"), 900); }
+            play("poweron");
+            fx.close();
+            toast({ icon: "🖥️", title: "Back online", text: "Have you tried turning it off and on again?", duration: 3600 });
+        }, 6400);
+    },
+
+    /* ---------- cat ---------- */
+    cat() {
+        if (reducedMotion) {
+            toast({ icon: "🐱", title: "Meow", text: "A cat appeared. Briefly.", duration: 3000 });
+            return;
+        }
+
+        const inputRect = document.getElementById("input-line")?.getBoundingClientRect();
+        const victim = [...document.querySelectorAll("#output .result .line")].pop() || null;
+        if (!inputRect) return;
+
+        const catSvg = `
+            <svg class="cat-svg" viewBox="0 0 34 22" shape-rendering="crispEdges" aria-hidden="true">
+                <g class="cat-tail"><rect x="1" y="5" width="2" height="6" fill="#d9893a"/><rect x="3" y="9" width="3" height="2" fill="#d9893a"/></g>
+                <rect x="5" y="8" width="18" height="9" fill="#e8a05a"/>
+                <rect x="9" y="8" width="2" height="9" fill="#d9893a"/><rect x="14" y="8" width="2" height="9" fill="#d9893a"/>
+                <rect x="21" y="3" width="10" height="10" fill="#e8a05a"/>
+                <rect x="21" y="1" width="3" height="3" fill="#e8a05a"/><rect x="28" y="1" width="3" height="3" fill="#e8a05a"/>
+                <rect x="22" y="2" width="1" height="1" fill="#f6c6a0"/><rect x="29" y="2" width="1" height="1" fill="#f6c6a0"/>
+                <rect x="24" y="6" width="2" height="2" fill="#16130f"/><rect x="28" y="6" width="2" height="2" fill="#16130f"/>
+                <rect x="26" y="9" width="2" height="1" fill="#e07a8f"/>
+                <g class="cat-legs-a"><rect x="6" y="17" width="3" height="5" fill="#d9893a"/><rect x="18" y="17" width="3" height="5" fill="#d9893a"/></g>
+                <g class="cat-legs-b"><rect x="11" y="17" width="3" height="5" fill="#d9893a"/><rect x="22" y="17" width="3" height="5" fill="#d9893a"/></g>
+            </svg>`;
+
+        const fx = layer("cat", "fx-cat", `<div class="cat walking">${catSvg}<div class="cat-bubble">meow</div></div>`, { ambient: true, lock: true, duration: 12500 });
+        const cat = fx.el.querySelector(".cat");
+        const size = 100;
+        const y = Math.min(window.innerHeight - size - 4, inputRect.top - size + 20);
+        const stopX = Math.min(window.innerWidth - size - 20, inputRect.left + 230);
+
+        cat.style.cssText = `top:${y}px;left:${-size - 10}px;width:${size}px`;
+        let victimAnim = null;
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            cat.style.transition = "left 3.2s linear";
+            cat.style.left = `${stopX}px`;
+        }));
+
+        [400, 800, 1200, 1600, 2000, 2400, 2800].forEach(ms => fx.later(() => play("tick"), ms));
+
+        fx.later(() => {
+            cat.classList.remove("walking");
+            cat.classList.add("sitting");
+            cat.classList.add("meow");
+            play("wave");
+        }, 3300);
+
+        fx.later(() => {
+            if (!victim) return;
+            const r = victim.getBoundingClientRect();
+            const dx = Math.max(0, stopX + 50 - r.left - 80);
+            victimAnim = victim.animate([
+                { transform: "none", opacity: 1 },
+                { transform: `translate(${dx}px, -4px)`, opacity: 1, offset: 0.35 },
+                { transform: `translate(${dx + 40}px, 260px) rotate(40deg)`, opacity: 0 }
+            ], { duration: 1500, easing: "cubic-bezier(.5, 0, .8, .6)", fill: "forwards" });
+            play("crack");
+        }, 5200);
+
+        fx.later(() => {
+            victimAnim?.cancel();
+            victim?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
+            cat.classList.remove("sitting", "meow");
+            cat.classList.add("walking");
+            cat.style.transition = "left 2.8s linear";
+            cat.style.left = `${window.innerWidth + 20}px`;
+        }, 8000);
     },
 
     /* ---------- wish ---------- */

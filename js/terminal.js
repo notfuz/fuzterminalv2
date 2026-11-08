@@ -448,6 +448,22 @@ output.addEventListener("click", event => {
 // hidden: the red dot does what a red dot should do
 document.querySelector("#terminal-header .red")?.addEventListener("click", () => runTyped("exit"));
 
+// the classic cheat code, typed anywhere on the page
+const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+let konamiAt = 0;
+
+window.addEventListener("keydown", event => {
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    konamiAt = key === KONAMI[konamiAt] ? konamiAt + 1 : (key === KONAMI[0] ? 1 : 0);
+
+    if (konamiAt === KONAMI.length) {
+        konamiAt = 0;
+        if (isLocked()) return;
+        resetInput();
+        runTyped("konami");
+    }
+});
+
 window.addEventListener("load", () => {
     input.focus({ preventScroll: true });
     renderInput();
