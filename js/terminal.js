@@ -292,7 +292,7 @@ async function execute(normalized) {
         }
     }
 
-    if (cmd.effect) runEffect(cmd.effect);
+    if (cmd.effect) runEffect(cmd.effect, args);
     if (cmd.secret) discover(key, secretNames().length);
 }
 

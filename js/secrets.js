@@ -1,6 +1,7 @@
 import { play } from "./audio.js";
 import { registerWindow, unregisterWindow, shineify, reducedMotion } from "./windows.js";
 import { h } from "./dom.js";
+import { EFFECTS2 } from "./secrets2.js";
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = list => list[Math.floor(Math.random() * list.length)];
@@ -52,7 +53,7 @@ export function discover(name, total) {
 
 const active = new Map();
 
-function layer(id, className, content, { lock = true, ambient = false, pauseSky = false, closeOnClick = true, duration = 0, onClose } = {}) {
+export function layer(id, className, content, { lock = true, ambient = false, pauseSky = false, closeOnClick = true, duration = 0, onClose } = {}) {
     active.get(id)?.close();
 
     const el = h("div", { class: `fx-overlay ${className}${ambient ? " ambient" : ""}` });
@@ -1391,12 +1392,12 @@ const EFFECTS = {
     }
 };
 
-export function runEffect(name) {
-    const effect = EFFECTS[name];
+export function runEffect(name, args = []) {
+    const effect = EFFECTS[name] || EFFECTS2[name];
     if (!effect) return;
 
     try {
-        effect();
+        effect(args);
     } catch (error) {
         console.error(`Effect "${name}" failed`, error);
     }

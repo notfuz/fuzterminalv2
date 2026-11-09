@@ -1,4 +1,5 @@
 import { getFound } from "./secrets.js";
+import { petActive } from "./secrets2.js";
 import { h } from "./dom.js";
 
 // edit this to change the about command
@@ -307,6 +308,175 @@ const commands = {
         effect: "cat"
     },
 
+    earthquake: {
+        secret: true,
+        hidden: true,
+        aliases: ["quake"],
+        output: ["Seismic activity detected.", "Brace yourself."],
+        effect: "earthquake"
+    },
+
+    flip: {
+        secret: true,
+        hidden: true,
+        aliases: ["upsidedown"],
+        output: ["Rotating the page 180 degrees...", "Hold on tight."],
+        effect: "flip"
+    },
+
+    glitch: {
+        secret: true,
+        hidden: true,
+        output: ["Warning: signal corrupted.", "this is fine."],
+        effect: "glitch"
+    },
+
+    supernova: {
+        secret: true,
+        hidden: true,
+        aliases: ["nova"],
+        output: ["A star is running out of fuel...", "Watch the sky."],
+        effect: "supernova"
+    },
+
+    rain: {
+        secret: true,
+        hidden: true,
+        aliases: ["storm"],
+        output: ["Clouds are gathering...", "Maybe bring an umbrella."],
+        effect: "rain"
+    },
+
+    warp: {
+        secret: true,
+        hidden: true,
+        aliases: ["hyperspace", "lightspeed"],
+        output: ["Engaging hyperdrive...", "Jumping to lightspeed."],
+        effect: "warp"
+    },
+
+    snake: {
+        secret: true,
+        hidden: true,
+        output: ["Starting snake...", "Arrow keys to move. Don't hit the walls."],
+        effect: "snake"
+    },
+
+    pet: {
+        secret: true,
+        hidden: true,
+        output: args => {
+            const action = args[0] || "";
+            if (action === "feed") return ["You hold out a snack..."];
+            if (action === "sleep") return ["Shh. Fuzzy is falling asleep."];
+            if (action === "wake") return ["Fuzzy yawns and wakes up."];
+            if (action === "bye" || action === "leave" || action === "remove") return [petActive() ? "Fuzzy waves goodbye." : "Fuzzy isn't here right now."];
+            if (action) return [`pet: Fuzzy doesn't know the trick '${action}'.`, "Try: feed, sleep, wake, bye."];
+            return petActive()
+                ? ["Fuzzy is already here."]
+                : ["A tiny creature appears.", "It follows your cursor. Try: pet feed, pet sleep, pet bye."];
+        },
+        effect: "pet"
+    },
+
+    flashlight: {
+        secret: true,
+        hidden: true,
+        aliases: ["torch"],
+        output: ["Lights out.", "Something might be hiding in the dark."],
+        effect: "flashlight"
+    },
+
+    "8ball": {
+        secret: true,
+        hidden: true,
+        aliases: ["magic8ball", "ball"],
+        output: args => args.length
+            ? [`Q: ${args.join(" ")}`, "Shaking the magic 8-ball..."]
+            : ["You didn't ask anything.", "Shaking the magic 8-ball anyway..."],
+        effect: "8ball"
+    },
+
+    roll: {
+        secret: true,
+        hidden: true,
+        aliases: ["dice"],
+        output: args => [`Rolling a d${Math.max(2, Math.min(1000, parseInt((args[0] || "6").replace(/^d/, ""), 10) || 6))}...`],
+        effect: "roll"
+    },
+
+    coin: {
+        secret: true,
+        hidden: true,
+        aliases: ["flip coin", "flipcoin", "toss"],
+        output: ["Flipping a coin..."],
+        effect: "coin"
+    },
+
+    "rm -rf --no-preserve-root": {
+        secret: true,
+        hidden: true,
+        aliases: ["rm -rf --no-preserve-root /", "rm -rf / --no-preserve-root", "rm --no-preserve-root -rf /", "sudo rm -rf --no-preserve-root /"],
+        output: ["Deleting everything...", "--no-preserve-root: there is no safety net."],
+        effect: "nuke"
+    },
+
+    apt: {
+        secret: true,
+        hidden: true,
+        output: args => {
+            if (args[0] !== "install" || !args[1]) return [`E: Invalid operation ${args[0] || ""}`.trim(), "Usage: apt install <package>"];
+            return [
+                "Reading package lists... Done",
+                "Building dependency tree... Done",
+                "The following NEW packages will be installed:",
+                `  ${args[1]}`,
+                "0 upgraded, 1 newly installed, 0 to remove, 0 not upgraded."
+            ];
+        },
+        effect: "apt"
+    },
+
+    git: {
+        secret: true,
+        hidden: true,
+        output: args => {
+            if (!args.length) return ["usage: git <command>", "try: git push --force"];
+            if (args[0] === "push" && (args.includes("--force") || args.includes("-f"))) {
+                return [
+                    "Enumerating objects: 9001, done.",
+                    "Counting objects: 100% (9001/9001), done.",
+                    "remote: WARNING: force-pushing rewrites history",
+                    "To github.com:notfuz/fuzterminal.git",
+                    " + 4f2a9c1...e7b1d03 main -> main (forced update)"
+                ];
+            }
+            if (args[0] === "push") return ["Everything up-to-date", "(try adding --force, I dare you)"];
+            return [`git: '${args[0]}' is not a git command. See 'git --help'.`];
+        },
+        effect: "gitpush"
+    },
+
+    ssh: {
+        secret: true,
+        hidden: true,
+        output: args => args.length
+            ? [`ssh: connecting to ${args[0]}...`, "Authenticating..."]
+            : ["usage: ssh user@host"],
+        effect: "ssh"
+    },
+
+    curl: {
+        secret: true,
+        hidden: true,
+        output: args => {
+            if (!args.length) return ["curl: try 'curl ascii.theater'"];
+            if (args.some(a => a.includes("ascii.theater"))) return ["Connecting to ascii.theater...", "HTTP/1.1 200 OK (streaming)"];
+            return [`curl: (6) Could not resolve host: ${args[0]}`];
+        },
+        effect: "curl"
+    },
+
     secrets: {
         hidden: true,
         render: () => secretsList()
@@ -374,6 +544,24 @@ export const DOCS = {
     gravity: { about: "Turns gravity on. The text falls out of the terminal and you can drag it around.", usage: [["drag", "move the fallen text"], ["Esc / Put it back", "return everything"]] },
     bsod: { about: "Crashes the terminal with a blue screen, then reboots it." },
     cat: { about: "A cat shows up, lies down next to your text and bats it off the screen.", usage: [["cat", "summon the cat"], ["cat <file>", "no such file, but the cat comes anyway"]] },
+
+    earthquake: { about: "The terminal and the page shake harder and harder. Cracks spread, the text jitters loose, then everything settles." },
+    flip: { about: "Turns the whole page upside down for a few seconds. You can still type." },
+    glitch: { about: "RGB-split, scanlines and scrambled text for a moment, then everything snaps back." },
+    supernova: { about: "A star swells, blinds the screen white, then fades into a nebula." },
+    rain: { about: "A storm rolls over the page, with lightning and thunder." },
+    warp: { about: "The stars stretch into hyperspace lines as you jump to lightspeed." },
+    snake: { about: "A playable game of Snake. Your best score is saved in this browser.", usage: [["arrows / WASD", "steer"], ["P", "pause"], ["Space", "play again"], ["Esc", "quit"]] },
+    pet: { about: "A tiny pixel creature that lives on the page and follows your cursor.", usage: [["pet", "bring it out"], ["pet feed", "give it a snack"], ["pet sleep", "put it to bed"], ["pet wake", "wake it up"], ["pet bye", "send it away"]] },
+    flashlight: { about: "Turns the lights off. Your cursor is a flashlight, and something is hiding in the dark.", usage: [["Esc", "lights back on"]] },
+    "8ball": { about: "Ask the magic 8-ball a question.", usage: [["8ball <question>", "e.g. 8ball will it work"]], aliases: ["magic8ball", "ball"] },
+    roll: { about: "Rolls a die with a little 3D tumble.", usage: [["roll", "a normal six-sided die"], ["roll d20", "any number of sides, up to 1000"]] },
+    coin: { about: "Flips a coin.", usage: [["coin", "heads or tails"], ["flip coin", "the same thing"]] },
+    "rm -rf --no-preserve-root": { about: "The bigger, scarier version of the delete joke. The page really does seem to vanish." },
+    apt: { about: "A fake package manager with a progress bar.", usage: [["apt install <package>", "try more-ram, more-fps, rizz, motivation, sleep, bugs"]] },
+    git: { about: "A fake git. One command in particular is very dramatic.", usage: [["git push --force", "the dramatic one"], ["git push", "boring by comparison"]] },
+    ssh: { about: "Connects to a server. The server is not what you expected.", usage: [["ssh <host>", "e.g. ssh fuz@example.com"]] },
+    curl: { about: "Fetches a URL. One site is worth visiting.", usage: [["curl ascii.theater", "a short ASCII show"]] },
     secrets: { about: "Lists every secret command and which ones you've found. Click one to run it.", usage: [["secrets", "show the tracker"]] }
 };
 

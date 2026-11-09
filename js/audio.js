@@ -278,6 +278,15 @@ const SOUNDS = {
         [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, { type: "square", dur: 0.12, vol: 0.07, at: i * 0.075, filter: 3500 }));
     },
 
+    rain() {
+        noise({ dur: 7, vol: 0.05, type: "highpass", from: 2600, q: 0.5 });
+    },
+
+    thunder() {
+        noise({ dur: 1.8, vol: 0.4, type: "lowpass", from: 520, to: 50, q: 0.6 });
+        tone(62, { to: 28, dur: 1.5, vol: 0.3, type: "sine" });
+    },
+
     blip() {
         tone(1200, { type: "square", dur: 0.04, vol: 0.04, filter: 3000 });
     }
