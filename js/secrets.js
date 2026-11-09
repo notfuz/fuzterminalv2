@@ -1090,23 +1090,39 @@ const EFFECTS = {
         const fx = layer("gravity", "fx-gravity", "", { ambient: true, duration: 120000, onClose: finish });
         play("whoosh");
 
-        items.forEach(({ el, r }, i) => {
-            let width = r.width;
-            if (el.classList.contains("line")) {
+        const textBox = el => {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            let left = Infinity;
+            let right = -Infinity;
+            while (walker.nextNode()) {
+                if (!walker.currentNode.nodeValue.trim()) continue;
                 const range = document.createRange();
-                range.selectNodeContents(el);
-                width = Math.min(r.width, Math.ceil(range.getBoundingClientRect().width) + 4);
+                range.selectNodeContents(walker.currentNode);
+                const box = range.getBoundingClientRect();
+                if (!box.width) continue;
+                left = Math.min(left, box.left);
+                right = Math.max(right, box.right);
             }
+            return right > left ? { left, width: right - left } : null;
+        };
+
+        items.forEach(({ el, r }, i) => {
+            const tight = el.classList.contains("line") || el.classList.contains("banner") ? textBox(el) : null;
+            const left = tight ? tight.left : r.left;
+            const width = tight ? Math.ceil(tight.width) + 4 : r.width;
 
             const piece = h("div", { class: "g-piece" });
-            piece.appendChild(el.cloneNode(true));
+            const copy = el.cloneNode(true);
+            copy.style.cssText = `position:relative;left:${r.left - left}px;width:${r.width}px;margin:0`;
+            piece.appendChild(copy);
             piece.style.width = `${width}px`;
+            piece.style.overflow = "hidden";
             host.appendChild(piece);
             el.style.visibility = "hidden";
 
             const p = {
-                el: piece, source: el, origin: { left: r.left, top: r.top },
-                x: r.left, y: r.top, w: width, h: r.height,
+                el: piece, source: el, origin: { left, top: r.top },
+                x: left, y: r.top, w: width, h: r.height,
                 vx: rand(-160, 160), vy: 0, rot: 0, vr: rand(-45, 45),
                 start: performance.now() + 250 + i * 45 + rand(0, 100),
                 held: false, asleep: false
