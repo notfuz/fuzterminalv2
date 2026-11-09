@@ -615,4 +615,14 @@ function neofetch() {
     return card;
 }
 
+const WIP = ["earthquake", "flip", "glitch", "supernova", "rain", "warp", "snake", "pet", "flashlight", "8ball", "roll", "coin", "rm -rf --no-preserve-root", "apt", "git", "ssh", "curl"];
+const WIP_ENABLED = false;
+
+if (!WIP_ENABLED) {
+    for (const key of WIP) {
+        delete commands[key];
+        delete DOCS[key];
+    }
+}
+
 export default commands;
