@@ -868,10 +868,14 @@ const EFFECTS = {
         fx.later(() => { fx.close(); toast({ icon: "🙏", title: "Rescued", text: "A kind stranger closed vim for you.", duration: 3600 }); }, 40000);
     },
 
-    rickroll() {
-        const frames = ["\\o/\n |\n/ \\", " o/\n/|\n/ >", "\\o \n |\\\n< \\", " o \n/|\\\n/ \\"];
+    giftcard() {
+        const origin = location.protocol.startsWith("http") ? `&origin=${encodeURIComponent(location.origin)}` : "";
+        const src = `https://www.youtube-nocookie.com/embed/xvFZjo5PgG0?enablejsapi=1&playsinline=1&rel=0${origin}`;
+        const ytOrigin = "https://www.youtube-nocookie.com";
+        let frame = null;
+        let onMessage = null;
 
-        const fx = layer("rickroll", "fx-rick", `
+        const fx = layer("giftcard", "fx-rick", `
             <div class="rick-ui window">
                 <div class="window-header">
                     <div class="traffic"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
@@ -882,16 +886,42 @@ const EFFECTS = {
                     <div class="rick-title">YOU WON A $500 GIFT CARD!</div>
                     <div class="rick-sub">Claiming your prize...</div>
                     <div class="rick-bar"><i></i></div>
-                    <pre class="rick-dance"></pre>
                     <div class="rick-got">You just got rickrolled.</div>
-                    <div class="rick-small">(no song quoted, I'm not getting sued)</div>
                 </div>
-            </div>`, { duration: 10500 });
+            </div>`, {
+            duration: 25000,
+            onClose: () => {
+                if (onMessage) window.removeEventListener("message", onMessage);
+                if (frame) { frame.src = "about:blank"; frame.remove(); }
+            }
+        });
 
         shineify(fx.el.querySelector(".rick-ui"), { delay: 0.3, duration: 5 });
         const title = fx.el.querySelector(".rick-title");
         const sub = fx.el.querySelector(".rick-sub");
-        const dance = fx.el.querySelector(".rick-dance");
+        const body = fx.el.querySelector(".rick-body");
+
+        // loads out of sight while the fake gift card "loads"
+        frame = h("iframe", {
+            class: "rick-frame",
+            src,
+            title: "Gift card",
+            allow: "autoplay; encrypted-media",
+            referrerpolicy: "strict-origin-when-cross-origin"
+        });
+        body.insertBefore(frame, fx.el.querySelector(".rick-got"));
+
+        const send = (func, args = []) => frame?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), ytOrigin);
+
+        onMessage = event => {
+            if (event.origin !== ytOrigin || event.source !== frame?.contentWindow) return;
+            try {
+                const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+                if (data?.info?.playerState === 0) fx.later(() => fx.close(), 1800);
+            } catch { /* not a player message */ }
+        };
+        window.addEventListener("message", onMessage);
+        frame.addEventListener("load", () => frame?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1 }), ytOrigin));
 
         fx.later(() => { sub.textContent = "Verifying you are a very lucky person..."; play("blip"); }, 1300);
         fx.later(() => { sub.textContent = "Almost there..."; play("blip"); }, 2500);
@@ -901,9 +931,7 @@ const EFFECTS = {
             title.textContent = "GOTCHA!";
             sub.textContent = "";
             play("achievement");
-            let i = 0;
-            dance.textContent = frames[0];
-            fx.every(() => { i += 1; dance.textContent = frames[i % frames.length]; play(i % 2 ? "tick" : "step"); }, 300);
+            send("playVideo");
             confetti({ count: 100, origin: { x: 0.5, y: 0.5 } });
         }, 3600);
     },

@@ -243,12 +243,12 @@ const commands = {
         effect: "vim"
     },
 
-    rickroll: {
+    giftcard: {
         secret: true,
         hidden: true,
-        aliases: ["rick", "giftcard", "gift"],
+        aliases: ["gift"],
         output: ["Congratulations!", "You have been selected."],
-        effect: "rickroll"
+        effect: "giftcard"
     },
 
     blackhole: {
@@ -367,7 +367,7 @@ export const DOCS = {
     freerobux: { about: "Generates 99,999,999,999 Robux. Totally real. (It's a joke.)" },
     sl: { about: "A train runs along the bottom of the page. A tribute to everyone who typed sl instead of ls." },
     vim: { about: "Opens a fake vim editor. Getting out is the real challenge.", usage: [["i", "insert mode (type text)"], ["Esc", "back to normal mode"], [":", "command mode"], [":q!", "the way out"]] },
-    rickroll: { about: "A \"free gift card\" that is not a free gift card." },
+    giftcard: { about: "Claim a free gift card.", usage: [["Esc", "close it early"]] },
     blackhole: { about: "A black hole eats the sky and the terminal, then spits them back out." },
     ping: { about: "A fake ping with a suspicious result.", usage: [["ping", "ping this terminal"], ["ping <address>", "ping anything you like"]] },
     konami: { about: "The cheat code: +30 lives, rainbow sky, shooting stars.", usage: [["konami", "type the command"], ["↑ ↑ ↓ ↓ ← → ← → B A", "or press the keys anywhere on the page"]] },
