@@ -1050,7 +1050,7 @@ const EFFECTS = {
         }
 
         const view = body.getBoundingClientRect();
-        const selector = ".banner, #output .line, #output .card, #output .social-card, #terminal-body > .line:not(#input-line)";
+        const selector = ".banner, #output .line, #output .card, #output .social-card, #terminal-body > .line";
         let candidates = [...body.querySelectorAll(selector)];
         candidates = candidates.filter(el => !candidates.some(other => other !== el && other.contains(el)));
 
@@ -1113,6 +1113,8 @@ const EFFECTS = {
 
             const piece = h("div", { class: "g-piece" });
             const copy = el.cloneNode(true);
+            copy.querySelector("input")?.remove();
+            copy.removeAttribute("id");
             copy.style.cssText = `position:relative;left:${r.left - left}px;width:${r.width}px;margin:0`;
             piece.appendChild(copy);
             piece.style.width = `${width}px`;
