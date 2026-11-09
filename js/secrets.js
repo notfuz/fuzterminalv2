@@ -1072,7 +1072,20 @@ const EFFECTS = {
             p.el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) rotate(${p.rot.toFixed(1)}deg)`;
         };
 
+        const onResize = () => {
+            pieces.forEach(p => {
+                p.h = p.el.offsetHeight || p.h;
+                p.w = p.el.offsetWidth || p.w;
+                if (!p.held) {
+                    p.asleep = false;
+                    p.vy = Math.min(p.vy, 0);
+                }
+            });
+        };
+        window.addEventListener("resize", onResize);
+
         const finish = () => {
+            window.removeEventListener("resize", onResize);
             cancelAnimationFrame(raf);
             pieces.forEach(p => {
                 p.held = true;
@@ -1084,6 +1097,8 @@ const EFFECTS = {
             setTimeout(() => {
                 pieces.forEach(p => { p.source.style.visibility = ""; });
                 host.remove();
+                const input = document.getElementById("real-input");
+                if (input && !input.disabled) input.focus({ preventScroll: true });
             }, 560);
         };
 
@@ -1142,10 +1157,14 @@ const EFFECTS = {
                 p.y += p.vy * dt;
                 p.rot += p.vr * dt;
 
-                const floor = window.innerHeight - p.h - margin;
-                const right = window.innerWidth - p.w - margin;
+                const rad = Math.abs(p.rot) * Math.PI / 180;
+                const boxH = p.w * Math.sin(rad) + p.h * Math.cos(rad);
+                const boxW = p.w * Math.cos(rad) + p.h * Math.sin(rad);
+                const floor = window.innerHeight - margin - (p.h + boxH) / 2;
+                const left = margin - (p.w - boxW) / 2;
+                const right = window.innerWidth - margin - (p.w + boxW) / 2;
 
-                if (p.x < margin) { p.x = margin; p.vx = Math.abs(p.vx) * 0.5; }
+                if (p.x < left) { p.x = left; p.vx = Math.abs(p.vx) * 0.5; }
                 if (p.x > right) { p.x = right; p.vx = -Math.abs(p.vx) * 0.5; }
 
                 if (p.y >= floor) {
