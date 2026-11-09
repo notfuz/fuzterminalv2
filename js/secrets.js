@@ -869,11 +869,7 @@ const EFFECTS = {
     },
 
     giftcard() {
-        const origin = location.protocol.startsWith("http") ? `&origin=${encodeURIComponent(location.origin)}` : "";
-        const src = `https://www.youtube-nocookie.com/embed/xvFZjo5PgG0?enablejsapi=1&playsinline=1&rel=0${origin}`;
-        const ytOrigin = "https://www.youtube-nocookie.com";
-        let frame = null;
-        let onMessage = null;
+        let video = null;
 
         const fx = layer("giftcard", "fx-rick", `
             <div class="rick-ui window">
@@ -891,37 +887,22 @@ const EFFECTS = {
             </div>`, {
             duration: 25000,
             onClose: () => {
-                if (onMessage) window.removeEventListener("message", onMessage);
-                if (frame) { frame.src = "about:blank"; frame.remove(); }
+                if (!video) return;
+                video.pause();
+                video.removeAttribute("src");
+                video.load();
+                video.remove();
             }
         });
 
         shineify(fx.el.querySelector(".rick-ui"), { delay: 0.3, duration: 5 });
         const title = fx.el.querySelector(".rick-title");
         const sub = fx.el.querySelector(".rick-sub");
-        const body = fx.el.querySelector(".rick-body");
 
-        // loads out of sight while the fake gift card "loads"
-        frame = h("iframe", {
-            class: "rick-frame",
-            src,
-            title: "Gift card",
-            allow: "autoplay; encrypted-media",
-            referrerpolicy: "strict-origin-when-cross-origin"
-        });
-        body.insertBefore(frame, fx.el.querySelector(".rick-got"));
-
-        const send = (func, args = []) => frame?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), ytOrigin);
-
-        onMessage = event => {
-            if (event.origin !== ytOrigin || event.source !== frame?.contentWindow) return;
-            try {
-                const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-                if (data?.info?.playerState === 0) fx.later(() => fx.close(), 1800);
-            } catch { /* not a player message */ }
-        };
-        window.addEventListener("message", onMessage);
-        frame.addEventListener("load", () => frame?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1 }), ytOrigin));
+        video = h("video", { class: "rick-video", src: "assets/videos/giftcard.mp4", preload: "auto", playsinline: "" });
+        video.playsInline = true;
+        fx.el.querySelector(".rick-body").insertBefore(video, fx.el.querySelector(".rick-got"));
+        video.addEventListener("ended", () => fx.later(() => fx.close(), 1500));
 
         fx.later(() => { sub.textContent = "Verifying you are a very lucky person..."; play("blip"); }, 1300);
         fx.later(() => { sub.textContent = "Almost there..."; play("blip"); }, 2500);
@@ -931,8 +912,9 @@ const EFFECTS = {
             title.textContent = "GOTCHA!";
             sub.textContent = "";
             play("achievement");
-            send("playVideo");
             confetti({ count: 100, origin: { x: 0.5, y: 0.5 } });
+
+            video.play().catch(() => { video.controls = true; });
         }, 3600);
     },
 
