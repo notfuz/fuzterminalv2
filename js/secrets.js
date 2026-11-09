@@ -1045,7 +1045,7 @@ const EFFECTS = {
         if (!body) return;
 
         if (reducedMotion) {
-            toast({ icon: "🍎", title: "Gravity", text: "Things would have fallen (reduced motion).", duration: 3000 });
+            toast({ icon: "\uD83C\uDF4E", title: "Gravity", text: "Things would have fallen (reduced motion).", duration: 3000 });
             return;
         }
 
@@ -1063,14 +1063,23 @@ const EFFECTS = {
         document.body.appendChild(host);
         const pieces = [];
         let z = 10;
+        let raf = 0;
+
+        const G = 2600;
+        const margin = 8;
+
+        const place = p => {
+            p.el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) rotate(${p.rot.toFixed(1)}deg)`;
+        };
 
         const finish = () => {
+            cancelAnimationFrame(raf);
             pieces.forEach(p => {
-                const now = p.el.getBoundingClientRect();
-                const dx = p.origin.left - now.left;
-                const dy = p.origin.top - now.top;
-                p.el.animate([{ transform: "none" }, { transform: `translate(${dx}px, ${dy}px)` }], { duration: 520, easing: "cubic-bezier(.2, .9, .2, 1)", fill: "forwards" });
-                p.inner.animate([{ transform: p.inner.style.transform || "none" }, { transform: "none" }], { duration: 520, fill: "forwards" });
+                p.held = true;
+                p.el.animate([
+                    { transform: `translate(${p.x}px, ${p.y}px) rotate(${p.rot}deg)` },
+                    { transform: `translate(${p.origin.left}px, ${p.origin.top}px) rotate(0deg)` }
+                ], { duration: 520, easing: "cubic-bezier(.2, .9, .2, 1)", fill: "forwards" });
             });
             setTimeout(() => {
                 pieces.forEach(p => { p.source.style.visibility = ""; });
@@ -1090,57 +1099,107 @@ const EFFECTS = {
             }
 
             const piece = h("div", { class: "g-piece" });
-            const inner = h("div", { class: "g-inner" });
-            inner.appendChild(el.cloneNode(true));
-            piece.appendChild(inner);
-            piece.style.cssText = `left:${r.left}px;top:${r.top}px;width:${width}px;`;
+            piece.appendChild(el.cloneNode(true));
+            piece.style.width = `${width}px`;
             host.appendChild(piece);
             el.style.visibility = "hidden";
 
-            const entry = { el: piece, inner, source: el, origin: { left: r.left, top: r.top }, w: width, h: r.height };
-            pieces.push(entry);
-
-            const targetLeft = Math.max(10, Math.min(window.innerWidth - width - 10, r.left + rand(-260, 260)));
-            const dx = targetLeft - r.left;
-            const dy = Math.max(0, window.innerHeight - r.height - 30 - rand(0, 40) - r.top);
-            const rot = rand(-16, 16);
-            const delay = 250 + i * 45 + rand(0, 100);
-            const dur = 520 + Math.sqrt(dy) * 28;
-
-            const ax = piece.animate([{ transform: "none" }, { transform: `translateX(${dx}px)` }], { duration: dur, delay, easing: "cubic-bezier(.2, .6, .4, 1)", fill: "both" });
-            const ay = inner.animate([{ transform: "none" }, { transform: `translateY(${dy}px) rotate(${rot}deg)` }], { duration: dur, delay, easing: "cubic-bezier(.55, 0, 1, .5)", fill: "both" });
-
-            ay.finished.then(() => {
-                if (fx.closed) return;
-                piece.style.left = `${r.left + dx}px`;
-                piece.style.top = `${r.top + dy}px`;
-                inner.style.transform = `rotate(${rot}deg)`;
-                ax.cancel();
-                ay.cancel();
-                piece.classList.add("landed");
-                if (i % 3 === 0) play("stamp");
-            }).catch(() => {});
+            const p = {
+                el: piece, source: el, origin: { left: r.left, top: r.top },
+                x: r.left, y: r.top, w: width, h: r.height,
+                vx: rand(-160, 160), vy: 0, rot: 0, vr: rand(-45, 45),
+                start: performance.now() + 250 + i * 45 + rand(0, 100),
+                held: false, asleep: false
+            };
+            pieces.push(p);
+            place(p);
         });
+
+        const step = (now, dt) => {
+            for (const p of pieces) {
+                if (p.held || p.asleep || now < p.start) continue;
+
+                p.vy += G * dt;
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.rot += p.vr * dt;
+
+                const floor = window.innerHeight - p.h - margin;
+                const right = window.innerWidth - p.w - margin;
+
+                if (p.x < margin) { p.x = margin; p.vx = Math.abs(p.vx) * 0.5; }
+                if (p.x > right) { p.x = right; p.vx = -Math.abs(p.vx) * 0.5; }
+
+                if (p.y >= floor) {
+                    p.y = floor;
+                    if (p.vy > 260) play("stamp");
+                    p.vy = p.vy > 220 ? -p.vy * 0.32 : 0;
+                    p.vx *= 0.7;
+                    p.vr *= 0.4;
+                    p.rot = Math.max(-18, Math.min(18, p.rot));
+                    if (!p.vy && Math.abs(p.vx) < 8) { p.vx = 0; p.vr = 0; p.asleep = true; }
+                }
+
+                place(p);
+            }
+        };
+
+        let last = performance.now();
+        const loop = now => {
+            const dt = Math.min(0.033, (now - last) / 1000);
+            last = now;
+            step(now, dt);
+            if (!fx.closed) raf = requestAnimationFrame(loop);
+        };
+        raf = requestAnimationFrame(loop);
 
         let drag = null;
+
         host.addEventListener("pointerdown", event => {
-            const piece = event.target.closest(".g-piece.landed");
-            if (!piece) return;
-            const rect = piece.getBoundingClientRect();
-            drag = { piece, dx: event.clientX - rect.left, dy: event.clientY - rect.top };
-            piece.style.zIndex = String(++z);
-            piece.classList.add("dragging");
-            piece.setPointerCapture(event.pointerId);
+            const el = event.target.closest(".g-piece");
+            const p = pieces.find(item => item.el === el);
+            if (!p || performance.now() < p.start) return;
+
+            drag = { p, dx: event.clientX - p.x, dy: event.clientY - p.y, trail: [] };
+            p.held = true;
+            p.asleep = false;
+            p.vx = p.vy = p.vr = 0;
+            el.style.zIndex = String(++z);
+            el.classList.add("dragging");
+            el.setPointerCapture(event.pointerId);
             event.preventDefault();
         });
+
         host.addEventListener("pointermove", event => {
             if (!drag) return;
-            drag.piece.style.left = `${event.clientX - drag.dx}px`;
-            drag.piece.style.top = `${event.clientY - drag.dy}px`;
+            const { p } = drag;
+            p.x = event.clientX - drag.dx;
+            p.y = event.clientY - drag.dy;
+            drag.trail.push({ x: p.x, y: p.y, t: performance.now() });
+            if (drag.trail.length > 6) drag.trail.shift();
+            place(p);
         });
-        const drop = () => { drag?.piece.classList.remove("dragging"); drag = null; };
-        host.addEventListener("pointerup", drop);
-        host.addEventListener("pointercancel", drop);
+
+        const release = () => {
+            if (!drag) return;
+            const { p, trail } = drag;
+            const a = trail[0];
+            const b = trail[trail.length - 1];
+            p.el.classList.remove("dragging");
+
+            if (a && b && b.t > a.t && performance.now() - b.t < 120) {
+                const span = (b.t - a.t) / 1000;
+                p.vx = Math.max(-2200, Math.min(2200, (b.x - a.x) / span));
+                p.vy = Math.max(-2200, Math.min(2200, (b.y - a.y) / span));
+                p.vr = p.vx * 0.03;
+            }
+
+            p.held = false;
+            drag = null;
+        };
+
+        host.addEventListener("pointerup", release);
+        host.addEventListener("pointercancel", release);
 
         const hint = h("div", { class: "g-hint" }, "Drag the text around.", h("button", { type: "button" }, "Put it back"));
         hint.querySelector("button").addEventListener("click", () => fx.close());
@@ -1214,8 +1273,13 @@ const EFFECTS = {
                 <g class="cat-paw"><rect x="30" y="10" width="5" height="3" fill="#e8a05a"/><rect x="34" y="10" width="3" height="3" fill="#f6c6a0"/></g>
             </svg>`;
 
-        const fx = layer("cat", "fx-cat", `<div class="cat flipped"><div class="cat-flip">${catSvg}</div><div class="cat-bubble">meow</div></div>`, { ambient: true, duration: 11500 });
+        const fx = layer("cat", "fx-cat", `<div class="cat flipped"><div class="cat-flip">${catSvg}</div><div class="cat-bubble">meow</div></div>`, {
+            ambient: true,
+            duration: 11500,
+            onClose: () => { dropHost?.remove(); victim.style.visibility = ""; }
+        });
         const cat = fx.el.querySelector(".cat");
+        let dropHost = null;
         const size = 110;
         const svgH = size * 22 / 40;
         const left = Math.min(window.innerWidth - size - 10, textRight + 18);
@@ -1237,11 +1301,19 @@ const EFFECTS = {
             if (!big) victim.animate([{ transform: "none" }, { transform: "translateX(-12px)" }, { transform: "none" }], { duration: 260, easing: "ease-out" });
             else {
                 play("crack");
-                fall = victim.animate([
+                const copy = h("div", { class: "g-piece" });
+                copy.appendChild(victim.cloneNode(true));
+                copy.style.cssText = `left:${r.left}px;top:${r.top}px;width:${Math.ceil(range.getBoundingClientRect().width) + 4}px`;
+                dropHost = h("div", { class: "gravity-host" }, copy);
+                document.body.appendChild(dropHost);
+                victim.style.visibility = "hidden";
+                const drop = window.innerHeight - r.top + 60;
+                fall = copy.animate([
                     { transform: "none", opacity: 1 },
-                    { transform: "translate(-30px, -2px)", opacity: 1, offset: 0.2 },
-                    { transform: "translate(-60px, 280px) rotate(-35deg)", opacity: 0 }
-                ], { duration: 1300, easing: "cubic-bezier(.5, 0, .8, .6)", fill: "forwards" });
+                    { transform: "translate(-30px, -6px) rotate(-6deg)", opacity: 1, offset: 0.15 },
+                    { transform: `translate(-110px, ${drop}px) rotate(-38deg)`, opacity: 1 }
+                ], { duration: 1100 + drop * 0.5, easing: "cubic-bezier(.5, 0, .9, .6)", fill: "forwards" });
+                fall.finished.then(() => dropHost?.remove()).catch(() => {});
             }
         }, ms);
 
@@ -1253,6 +1325,8 @@ const EFFECTS = {
 
         fx.later(() => {
             fall?.cancel();
+            dropHost?.remove();
+            victim.style.visibility = "";
             victim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
             cat.classList.remove("meow", "flipped");
             cat.classList.add("walking");

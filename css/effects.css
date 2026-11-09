@@ -1204,8 +1204,7 @@
     line-height: 1.55;
     color: var(--text);
 }
-.g-piece { position: fixed; touch-action: none; user-select: none; }
-.g-piece.landed { pointer-events: auto; cursor: grab; }
+.g-piece { position: fixed; left: 0; top: 0; touch-action: none; user-select: none; pointer-events: auto; cursor: grab; will-change: transform; }
 .g-piece.dragging { cursor: grabbing; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .6)); }
 .g-inner { transform-origin: 50% 50%; }
 .g-inner > * { margin: 0 !important; }

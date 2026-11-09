@@ -286,7 +286,7 @@ async function execute(normalized) {
     if (cmd.render) {
         add(cmd.render());
     } else {
-        for (const item of cmd.output || []) {
+        for (const item of typeof cmd.output === "function" ? cmd.output(args) : cmd.output || []) {
             if (typeof item === "string") printLine(item);
             else printLink(item);
         }

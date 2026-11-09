@@ -262,12 +262,12 @@ const commands = {
     ping: {
         secret: true,
         hidden: true,
-        output: [
-            "PING fuz.terminal (127.0.0.1): 56 data bytes",
+        output: args => [
+            `PING ${args[0] || "fuz.terminal"} (127.0.0.1): 56 data bytes`,
             "64 bytes from 127.0.0.1: icmp_seq=0 ttl=64 time=0.042 ms",
             "64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.039 ms",
             "64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=9999 ms",
-            "--- fuz.terminal ping statistics ---",
+            `--- ${args[0] || "fuz.terminal"} ping statistics ---`,
             "3 packets transmitted, 3 received, 0% packet loss",
             "(the third one went through a black hole)"
         ],
@@ -301,7 +301,9 @@ const commands = {
         secret: true,
         hidden: true,
         aliases: ["meow", "kitty", "kitten"],
-        output: ["Meow."],
+        output: args => args.length
+            ? [`cat: ${args.join(" ")}: No such file or directory`, "...but a cat showed up anyway."]
+            : ["Meow."],
         effect: "cat"
     },
 
@@ -367,11 +369,11 @@ export const DOCS = {
     vim: { about: "Opens a fake vim editor. Getting out is the real challenge.", usage: [["i", "insert mode (type text)"], ["Esc", "back to normal mode"], [":", "command mode"], [":q!", "the way out"]] },
     rickroll: { about: "A \"free gift card\" that is not a free gift card." },
     blackhole: { about: "A black hole eats the sky and the terminal, then spits them back out." },
-    ping: { about: "A fake ping with a suspicious result.", usage: [["ping", "ping this terminal"], ["ping <anything>", "works with any address"]] },
+    ping: { about: "A fake ping with a suspicious result.", usage: [["ping", "ping this terminal"], ["ping <address>", "ping anything you like"]] },
     konami: { about: "The cheat code: +30 lives, rainbow sky, shooting stars.", usage: [["konami", "type the command"], ["↑ ↑ ↓ ↓ ← → ← → B A", "or press the keys anywhere on the page"]] },
     gravity: { about: "Turns gravity on. The text falls out of the terminal and you can drag it around.", usage: [["drag", "move the fallen text"], ["Esc / Put it back", "return everything"]] },
     bsod: { about: "Crashes the terminal with a blue screen, then reboots it." },
-    cat: { about: "A cat shows up, lies down next to your text and bats it off the screen.", usage: [["cat <anything>", "also works"]] },
+    cat: { about: "A cat shows up, lies down next to your text and bats it off the screen.", usage: [["cat", "summon the cat"], ["cat <file>", "no such file, but the cat comes anyway"]] },
     secrets: { about: "Lists every secret command and which ones you've found. Click one to run it.", usage: [["secrets", "show the tracker"]] }
 };
 
